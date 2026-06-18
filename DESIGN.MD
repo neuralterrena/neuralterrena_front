@@ -106,3 +106,15 @@ Antes de dar por lista una vista:
 - No introduce nuevos colores fuera de tokens.
 - No usa imágenes genéricas o decorativas sin función.
 - No convierte una herramienta en una landing.
+
+## Convención de Features
+
+Toda pantalla o flujo nuevo debe nacer dentro de una feature siguiendo `docs/FEATURE_CONVENTION.md`.
+
+Regla práctica:
+
+- `ui` decide cómo se ve.
+- `model` decide cómo funciona.
+- `api` decide cómo habla con servicios externos.
+
+Si una vista necesita lógica compartida con otra feature, primero se duplica localmente de forma consciente y solo se sube a `shared` cuando el segundo caso de uso sea real y estable.

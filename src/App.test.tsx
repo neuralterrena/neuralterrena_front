@@ -1,7 +1,7 @@
-import { authSessionStore } from "./features/auth/services/authSessionStore";
-import { authService } from "./features/auth/services/authService";
+import { authSessionStore } from "@/features/auth/model/authSessionStore";
+import { authService } from "@/features/auth/model/authService";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import App from "./App";
+import App from "@/App";
 
 describe("App", () => {
   beforeEach(() => {
