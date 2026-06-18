@@ -1,0 +1,76 @@
+@font-face {
+  font-display: swap;
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  src:
+    url("/fonts/Inter-VariableFont_opsz_wght.ttf") format("truetype-variations"),
+    url("/fonts/Inter-VariableFont_opsz_wght.ttf") format("truetype");
+}
+
+@font-face {
+  font-display: swap;
+  font-family: "Inter";
+  font-style: italic;
+  font-weight: 100 900;
+  src:
+    url("/fonts/Inter-Italic-VariableFont_opsz_wght.ttf") format("truetype-variations"),
+    url("/fonts/Inter-Italic-VariableFont_opsz_wght.ttf") format("truetype");
+}
+
+:root {
+  --nt-color-yellow: #f9b233;
+  --nt-color-orange: #e85d2f;
+  --nt-color-red: #c62828;
+  --nt-color-blue: #1e4f82;
+  --nt-color-black: #1a1a1a;
+  --nt-color-white: #ffffff;
+
+  --nt-gray-100: #dadada;
+  --nt-gray-300: #b2b2b2;
+  --nt-gray-500: #878787;
+  --nt-gray-700: #3c3c3b;
+  --nt-gray-900: #1a1a1a;
+
+  --nt-bg: var(--nt-color-white);
+  --nt-bg-subtle: #f6f6f6;
+  --nt-surface: var(--nt-color-white);
+  --nt-fg: var(--nt-color-black);
+  --nt-fg-muted: var(--nt-gray-700);
+  --nt-fg-subtle: var(--nt-gray-500);
+  --nt-border: var(--nt-gray-100);
+  --nt-border-strong: var(--nt-gray-300);
+  --nt-cta-primary-bg: var(--nt-color-blue);
+  --nt-cta-primary-fg: var(--nt-color-white);
+  --nt-cta-primary-hover: #163e68;
+
+  --nt-font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --nt-font-mono: "SF Mono", Menlo, Consolas, monospace;
+
+  --nt-text-xs: 12px;
+  --nt-text-sm: 14px;
+  --nt-text-base: 16px;
+  --nt-text-lg: 18px;
+  --nt-text-xl: 20px;
+  --nt-text-2xl: 24px;
+  --nt-text-3xl: 32px;
+  --nt-text-4xl: 40px;
+
+  --nt-space-half: 4px;
+  --nt-space-1: 8px;
+  --nt-space-2: 16px;
+  --nt-space-3: 24px;
+  --nt-space-4: 32px;
+  --nt-space-6: 48px;
+  --nt-space-8: 64px;
+
+  --nt-radius-sm: 2px;
+  --nt-radius-md: 4px;
+  --nt-radius-lg: 8px;
+
+  --nt-shadow-sm: 0 1px 2px rgba(26, 26, 26, 0.06);
+  --nt-shadow-md: 0 4px 8px rgba(26, 26, 26, 0.08);
+  --nt-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --nt-dur-fast: 120ms;
+  --nt-dur-base: 200ms;
+}
