@@ -1,5 +1,8 @@
 import { Eye, EyeOff, LockKeyhole, LogIn, Server, UserRound } from "lucide-react";
 import { type FormEvent, useId, useState } from "react";
+import { LanguageSwitcher } from "../../../app/components/LanguageSwitcher";
+import { ThemeSwitcher } from "../../../app/components/ThemeSwitcher";
+import { useLanguage } from "../../../app/providers/useLanguage";
 import { useAuth } from "../../../app/providers/useAuth";
 import { AuthError } from "../services/authTypes";
 
@@ -7,6 +10,7 @@ export function LoginPage() {
   const passwordId = useId();
   const usernameId = useId();
   const { isAuthenticating, login } = useAuth();
+  const { t } = useLanguage();
   const [formError, setFormError] = useState<string | null>(null);
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -21,13 +25,15 @@ export function LoginPage() {
     try {
       await login({ password, username: username.trim() });
     } catch (error) {
-      setFormError(error instanceof AuthError ? error.message : "No se pudo validar la sesión.");
+      setFormError(
+        error instanceof AuthError ? error.fallbackMessage ?? t(error.code) : t("auth.sessionValidationFailed"),
+      );
     }
   };
 
   return (
     <main className="login-screen">
-      <section aria-label="Contexto operativo" className="login-visual">
+      <section aria-label={t("auth.contextLabel")} className="login-visual">
         <div className="login-visual__top">
           <img
             alt="neural terrena"
@@ -36,6 +42,10 @@ export function LoginPage() {
             src="/brand/NT-logo-color-horizontal.png"
             width="360"
           />
+          <div className="toolbar-switchers">
+            <ThemeSwitcher />
+            <LanguageSwitcher />
+          </div>
         </div>
 
         <div aria-hidden="true" className="terrain-panel">
@@ -54,9 +64,9 @@ export function LoginPage() {
         </div>
 
         <div className="login-visual__copy">
-          <p className="nt-eyebrow">Terrain Intelligence</p>
-          <h1>Acceso operativo</h1>
-          <p>Una capa sincronizada para terreno, luz, visibilidad y tiempo.</p>
+          <p className="nt-eyebrow">{t("auth.visualEyebrow")}</p>
+          <h1>{t("auth.title")}</h1>
+          <p>{t("auth.visualDescription")}</p>
         </div>
       </section>
 
@@ -67,13 +77,13 @@ export function LoginPage() {
           </div>
 
           <div className="auth-card__heading">
-            <p className="nt-eyebrow">Consola</p>
-            <h2 id="login-title">Iniciar sesión</h2>
-            <p>Acceso a la superficie operativa de Neural Terrena.</p>
+            <p className="nt-eyebrow">{t("auth.console")}</p>
+            <h2 id="login-title">{t("auth.loginTitle")}</h2>
+            <p>{t("auth.loginSubtitle")}</p>
           </div>
 
           <div className="field-group">
-            <label htmlFor={usernameId}>Usuario</label>
+            <label htmlFor={usernameId}>{t("auth.username")}</label>
             <div className="input-shell">
               <UserRound aria-hidden="true" size={18} strokeWidth={1.75} />
               <input
@@ -81,7 +91,7 @@ export function LoginPage() {
                 id={usernameId}
                 name="username"
                 onChange={(event) => setUsername(event.target.value)}
-                placeholder="admin"
+                placeholder={t("auth.usernamePlaceholder")}
                 type="text"
                 value={username}
               />
@@ -89,7 +99,7 @@ export function LoginPage() {
           </div>
 
           <div className="field-group">
-            <label htmlFor={passwordId}>Clave</label>
+            <label htmlFor={passwordId}>{t("auth.password")}</label>
             <div className="input-shell">
               <LockKeyhole aria-hidden="true" size={18} strokeWidth={1.75} />
               <input
@@ -97,15 +107,15 @@ export function LoginPage() {
                 id={passwordId}
                 name="password"
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="admin"
+                placeholder={t("auth.passwordPlaceholder")}
                 type={passwordVisible ? "text" : "password"}
                 value={password}
               />
               <button
-                aria-label={passwordVisible ? "Ocultar clave" : "Mostrar clave"}
+                aria-label={passwordVisible ? t("auth.passwordHide") : t("auth.passwordShow")}
                 className="icon-button"
                 onClick={() => setPasswordVisible((visible) => !visible)}
-                title={passwordVisible ? "Ocultar clave" : "Mostrar clave"}
+                title={passwordVisible ? t("auth.passwordHide") : t("auth.passwordShow")}
                 type="button"
               >
                 {passwordVisible ? <EyeOff size={18} strokeWidth={1.75} /> : <Eye size={18} strokeWidth={1.75} />}
@@ -121,13 +131,13 @@ export function LoginPage() {
 
           <button className="primary-button" disabled={!canSubmit} type="submit">
             <LogIn aria-hidden="true" size={18} strokeWidth={1.75} />
-            <span>{isAuthenticating ? "Validando" : "Entrar"}</span>
+            <span>{isAuthenticating ? t("auth.submitLoading") : t("auth.enter")}</span>
           </button>
 
-          <div className="auth-card__meta" aria-label="Estado de autenticación">
+          <div className="auth-card__meta" aria-label={t("auth.sessionStatus")}>
             <span>
               <Server aria-hidden="true" size={16} strokeWidth={1.75} />
-              API ready
+              {t("auth.apiReady")}
             </span>
           </div>
         </form>

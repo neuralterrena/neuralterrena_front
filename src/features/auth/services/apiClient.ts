@@ -52,7 +52,7 @@ async function request(input: RequestInfo | URL, options: RequestOptions = {}) {
   const refreshedSession = await authService.refreshSession();
 
   if (!refreshedSession) {
-    throw new AuthError("La sesión ha expirado.");
+    throw new AuthError("auth.sessionExpired");
   }
 
   const retryHeaders = createHeaders(init.headers);

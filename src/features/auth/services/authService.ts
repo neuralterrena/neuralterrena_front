@@ -103,13 +103,13 @@ const parseUser = (value: unknown, fallbackUser: AuthUser): AuthUser => {
 
 const parseTokens = (value: unknown): AuthTokens => {
   if (!isRecord(value)) {
-    throw new AuthError("La respuesta de autenticación no es válida.");
+    throw new AuthError("auth.invalidResponse");
   }
 
   const accessToken = value.accessToken ?? value.token;
 
   if (typeof accessToken !== "string" || accessToken.length === 0) {
-    throw new AuthError("El servidor no devolvió un JWT válido.");
+    throw new AuthError("auth.invalidJwt");
   }
 
   const expiresAt =
@@ -194,7 +194,7 @@ const requestSession = async (endpoint: string, body: Record<string, string> | L
 
   if (!response.ok) {
     const message = await readTextSafely(response);
-    throw new AuthError(message || "No se pudo iniciar sesión.");
+    throw new AuthError("auth.loginFailed", message || undefined);
   }
 
   return (await response.json()) as unknown;
@@ -216,7 +216,7 @@ const loginWithMock = async ({ password, username }: LoginCredentials) => {
     return persistPayload(createMockPayload(user));
   }
 
-  throw new AuthError("Usuario o clave no válidos.");
+  throw new AuthError("auth.invalidCredentials");
 };
 
 const refreshWithMock = async (refreshSession: AuthRefreshSession) => {
@@ -232,7 +232,7 @@ const refreshWithMock = async (refreshSession: AuthRefreshSession) => {
 
 const loginWithServer = async (credentials: LoginCredentials, config: AuthConfig): Promise<AuthSession> => {
   if (!config.apiBaseUrl) {
-    throw new AuthError("Falta configurar VITE_API_BASE_URL.");
+    throw new AuthError("auth.missingApiBaseUrl");
   }
 
   const endpoint = new URL(config.loginPath, config.apiBaseUrl).toString();

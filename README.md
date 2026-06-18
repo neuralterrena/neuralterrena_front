@@ -1,4 +1,4 @@
-# Neural Terrena Console
+# Neural Terrena
 
 Aplicación React independiente para interfaces de producto de Neural Terrena.
 

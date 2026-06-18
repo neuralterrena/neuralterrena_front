@@ -7,6 +7,9 @@ describe("App", () => {
   beforeEach(() => {
     authService.clearSession();
     localStorage.clear();
+    document.documentElement.lang = "es";
+    document.documentElement.dataset.theme = "light";
+    document.documentElement.style.colorScheme = "light";
   });
 
   it("renders the login screen first", async () => {
@@ -39,6 +42,32 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent("Usuario o clave no válidos.");
     });
+  });
+
+  it("switches the interface language to English", async () => {
+    render(<App />);
+
+    await screen.findByRole("heading", { name: "Iniciar sesión" });
+    fireEvent.click(screen.getByRole("button", { name: "Inglés" }));
+
+    expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Username")).toBeInTheDocument();
+    expect(screen.getByLabelText("Password")).toBeInTheDocument();
+    expect(document.documentElement.lang).toBe("en");
+  });
+
+  it("switches the interface theme to dark", async () => {
+    render(<App />);
+
+    await screen.findByRole("heading", { name: "Iniciar sesión" });
+    fireEvent.click(screen.getByRole("button", { name: "Oscuro" }));
+
+    await waitFor(() => {
+      expect(document.documentElement.dataset.theme).toBe("dark");
+    });
+
+    expect(localStorage.getItem("nt.theme")).toBe("dark");
+    expect(document.documentElement.style.colorScheme).toBe("dark");
   });
 
   it("restores the authenticated session on reload using the refresh token", async () => {

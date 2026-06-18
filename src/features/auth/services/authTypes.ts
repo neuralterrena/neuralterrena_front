@@ -29,9 +29,23 @@ export interface AuthRefreshSession {
   user: AuthUser;
 }
 
+export type AuthErrorCode =
+  | "auth.invalidCredentials"
+  | "auth.invalidJwt"
+  | "auth.invalidResponse"
+  | "auth.loginFailed"
+  | "auth.missingApiBaseUrl"
+  | "auth.sessionExpired"
+  | "auth.sessionValidationFailed";
+
 export class AuthError extends Error {
-  constructor(message: string) {
-    super(message);
+  code: AuthErrorCode;
+  fallbackMessage?: string;
+
+  constructor(code: AuthErrorCode, fallbackMessage?: string) {
+    super(fallbackMessage ?? code);
     this.name = "AuthError";
+    this.code = code;
+    this.fallbackMessage = fallbackMessage;
   }
 }
