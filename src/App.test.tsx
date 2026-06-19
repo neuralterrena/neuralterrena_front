@@ -80,4 +80,28 @@ describe("App", () => {
       expect(screen.getByRole("heading", { name: "Panel operativo" })).toBeInTheDocument();
     });
   });
+
+  it("opens the user menu in the dashboard and signs out from there", async () => {
+    render(<App />);
+
+    fireEvent.change(await screen.findByLabelText("Usuario"), { target: { value: "admin" } });
+    fireEvent.change(screen.getByLabelText("Clave"), { target: { value: "admin" } });
+    fireEvent.click(screen.getByRole("button", { name: "Entrar" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Panel operativo" })).toBeInTheDocument();
+    });
+
+    fireEvent.mouseEnter(screen.getByLabelText("Navegación principal"));
+    fireEvent.click(screen.getByRole("button", { name: "Menú de usuario" }));
+
+    expect(screen.getByText("Perfil")).toBeInTheDocument();
+    expect(screen.getByText("Preferencias")).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Salir" })[0]);
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Iniciar sesión" })).toBeInTheDocument();
+    });
+  });
 });
