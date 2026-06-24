@@ -1,26 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { PropsWithChildren } from "react";
 import { authService } from "./authService";
-import type { AuthSession, LoginCredentials } from "./authTypes";
+import type { AuthSession, AuthStatus, LoginCredentials, PasswordResetConfirmInput, PasswordResetRequest } from "./authTypes";
 import { AuthContext, type AuthContextValue } from "./authContext";
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<AuthSession | null>(() => authService.getSession());
+  const [status, setStatus] = useState<AuthStatus>(() => (authService.getSession() ? "authenticated" : "bootstrapping"));
   const [isAuthenticating, setIsAuthenticating] = useState(false);
-  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
-    const unsubscribe = authService.subscribe(setSession);
-
-    void authService.restoreSession().then((restoredSession) => {
+    const unsubscribe = authService.subscribe((nextState) => {
       if (!isMounted) {
         return;
       }
 
-      setSession(restoredSession);
-      setIsReady(true);
+      setSession(nextState.session);
+      setStatus(nextState.status);
     });
+
+    void authService.bootstrapSession();
 
     return () => {
       isMounted = false;
@@ -32,28 +32,40 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setIsAuthenticating(true);
 
     try {
-      const nextSession = await authService.login(credentials);
-      setSession(nextSession);
+      return await authService.login(credentials);
     } finally {
       setIsAuthenticating(false);
     }
   }, []);
 
-  const logout = useCallback(() => {
-    authService.clearSession();
-    setSession(null);
+  const logout = useCallback(async () => {
+    setIsAuthenticating(true);
+
+    try {
+      await authService.logout();
+    } finally {
+      setIsAuthenticating(false);
+    }
   }, []);
+
+  const requestPasswordReset = useCallback((payload: PasswordResetRequest) => authService.requestPasswordReset(payload), []);
+
+  const resetPassword = useCallback((payload: PasswordResetConfirmInput) => authService.resetPassword(payload), []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      isAuthenticated: session !== null,
+      isAuthenticated: status === "authenticated" && session !== null,
       isAuthenticating,
-      isReady,
+      isBootstrapping: status === "bootstrapping",
+      isReady: status !== "bootstrapping",
       login,
       logout,
+      requestPasswordReset,
+      resetPassword,
       session,
+      status,
     }),
-    [isAuthenticating, isReady, login, logout, session],
+    [isAuthenticating, login, logout, requestPasswordReset, resetPassword, session, status],
   );
 
   return <AuthContext value={value}>{children}</AuthContext>;

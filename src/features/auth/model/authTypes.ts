@@ -1,42 +1,47 @@
 export interface LoginCredentials {
+  email: string;
   password: string;
-  username: string;
+}
+
+export interface PasswordResetRequest {
+  email: string;
+}
+
+export interface PasswordResetConfirmInput {
+  newPassword: string;
+  token: string;
+  uid: string;
 }
 
 export interface AuthUser {
   displayName: string;
+  email: string;
   id: string;
   roles: string[];
-  username: string;
-}
-
-export interface AuthTokens {
-  accessToken: string;
-  expiresAt: string;
-  tokenType: "Bearer";
 }
 
 export interface AuthSession {
+  accessToken: string;
   authenticatedAt: string;
-  tokens: AuthTokens;
+  expiresAt: string;
   user: AuthUser;
 }
 
-export interface AuthRefreshSession {
-  authenticatedAt: string;
-  refreshToken: string;
-  tokenType: "Bearer";
-  user: AuthUser;
-}
+export type AuthStatus = "anonymous" | "authenticated" | "bootstrapping";
 
 export type AuthErrorCode =
   | "auth.invalidCredentials"
   | "auth.invalidJwt"
   | "auth.invalidResponse"
   | "auth.loginFailed"
+  | "auth.logoutFailed"
   | "auth.missingApiBaseUrl"
+  | "auth.passwordResetFailed"
+  | "auth.passwordResetInvalidLink"
+  | "auth.refreshFailed"
   | "auth.sessionExpired"
-  | "auth.sessionValidationFailed";
+  | "auth.sessionValidationFailed"
+  | "auth.unauthorized";
 
 export class AuthError extends Error {
   code: AuthErrorCode;

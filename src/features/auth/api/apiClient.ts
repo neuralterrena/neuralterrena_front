@@ -1,8 +1,10 @@
 import { authService } from "../model/authService";
 import { AuthError } from "../model/authTypes";
+import { notifyUnauthorized } from "../model/authNavigation";
 
 interface RequestOptions extends RequestInit {
   skipAuth?: boolean;
+  skipAuthRetry?: boolean;
 }
 
 const isBackendUrl = (url: URL) => {
@@ -30,7 +32,7 @@ const resolveUrl = (input: RequestInfo | URL) => {
 const createHeaders = (headers?: HeadersInit) => new Headers(headers);
 
 async function request(input: RequestInfo | URL, options: RequestOptions = {}) {
-  const { skipAuth = false, ...init } = options;
+  const { skipAuth = false, skipAuthRetry = false, ...init } = options;
   const url = resolveUrl(input);
   const headers = createHeaders(init.headers);
   const shouldAttachAuth = !skipAuth && isBackendUrl(url);
@@ -45,18 +47,19 @@ async function request(input: RequestInfo | URL, options: RequestOptions = {}) {
 
   const response = await fetch(input, { ...init, headers });
 
-  if (response.status !== 401 || !shouldAttachAuth) {
+  if (response.status !== 401 || !shouldAttachAuth || skipAuthRetry) {
     return response;
   }
 
   const refreshedSession = await authService.refreshSession();
 
   if (!refreshedSession) {
+    notifyUnauthorized();
     throw new AuthError("auth.sessionExpired");
   }
 
   const retryHeaders = createHeaders(init.headers);
-  retryHeaders.set("Authorization", `Bearer ${refreshedSession.tokens.accessToken}`);
+  retryHeaders.set("Authorization", `Bearer ${refreshedSession.accessToken}`);
 
   return fetch(input, { ...init, headers: retryHeaders });
 }

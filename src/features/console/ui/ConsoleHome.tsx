@@ -17,12 +17,13 @@ import {
   UserRound,
 } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
-import { useAuth } from "@/features/auth";
+import { useAuth, useLogout } from "@/features/auth";
 import { formatDateTime } from "@/shared/lib/datetime/formatDateTime";
 import { useLanguage, useTheme } from "@/shared/providers";
 
 export function ConsoleHome() {
-  const { logout, session } = useAuth();
+  const { session } = useAuth();
+  const logout = useLogout();
   const { language, setLanguage, t } = useLanguage();
   const { setThemePreference, themePreference } = useTheme();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
@@ -339,7 +340,7 @@ export function ConsoleHome() {
                     </span>
                     <div>
                       <strong>{session.user.displayName}</strong>
-                      <p>@{session.user.username}</p>
+                      <p>{session.user.email || session.user.id}</p>
                     </div>
                   </div>
                   <dl>
@@ -349,7 +350,7 @@ export function ConsoleHome() {
                     </div>
                     <div>
                       <dt>{t("console.expires")}</dt>
-                      <dd>{formatDateTime(session.tokens.expiresAt, language)}</dd>
+                      <dd>{formatDateTime(session.expiresAt, language)}</dd>
                     </div>
                   </dl>
                 </div>
@@ -384,7 +385,7 @@ export function ConsoleHome() {
                 </button>
                 <button
                   className="console-utility-option console-utility-option--rich console-utility-option--danger"
-                  onClick={logout}
+                  onClick={() => void logout()}
                   type="button"
                 >
                   <span className="console-utility-option__icon-shell">
@@ -419,11 +420,11 @@ export function ConsoleHome() {
           <dl>
             <div>
               <dt>{t("console.jwt")}</dt>
-              <dd>{session.tokens.tokenType}</dd>
+              <dd>Bearer</dd>
             </div>
             <div>
               <dt>{t("console.expires")}</dt>
-              <dd>{formatDateTime(session.tokens.expiresAt, language)}</dd>
+              <dd>{formatDateTime(session.expiresAt, language)}</dd>
             </div>
           </dl>
         </section>

@@ -1,270 +1,233 @@
 import { authSessionStore } from "./authSessionStore";
-import { authStorage } from "./authStorage";
+import type { AuthStoreState } from "./authSessionStore";
 import { AuthError } from "./authTypes";
-import type { AuthRefreshSession, AuthSession, AuthTokens, AuthUser, LoginCredentials } from "./authTypes";
-
-type AuthMode = "mock" | "server";
+import type {
+  AuthSession,
+  AuthUser,
+  LoginCredentials,
+  PasswordResetConfirmInput,
+  PasswordResetRequest,
+} from "./authTypes";
 
 interface AuthConfig {
   apiBaseUrl: string;
   loginPath: string;
-  mode: AuthMode;
+  logoutPath: string;
+  passwordResetConfirmPath: string;
+  passwordResetPath: string;
   refreshPath: string;
 }
 
-interface AuthPayload {
-  refreshSession: AuthRefreshSession | null;
-  session: AuthSession;
+interface AccessTokenResponse {
+  access: string;
 }
 
 const getAuthConfig = (): AuthConfig => ({
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? "",
-  loginPath: import.meta.env.VITE_AUTH_LOGIN_PATH ?? "/auth/login",
-  mode: import.meta.env.VITE_AUTH_MODE === "server" ? "server" : "mock",
-  refreshPath: import.meta.env.VITE_AUTH_REFRESH_PATH ?? "/auth/refresh",
+  apiBaseUrl: typeof import.meta.env.VITE_API_BASE_URL === "string" ? import.meta.env.VITE_API_BASE_URL : "",
+  loginPath: typeof import.meta.env.VITE_AUTH_LOGIN_PATH === "string" ? import.meta.env.VITE_AUTH_LOGIN_PATH : "/api/auth/login/",
+  logoutPath:
+    typeof import.meta.env.VITE_AUTH_LOGOUT_PATH === "string"
+      ? import.meta.env.VITE_AUTH_LOGOUT_PATH
+      : "/api/auth/token/logout/",
+  passwordResetConfirmPath:
+    typeof import.meta.env.VITE_AUTH_PASSWORD_RESET_CONFIRM_PATH === "string"
+      ? import.meta.env.VITE_AUTH_PASSWORD_RESET_CONFIRM_PATH
+      : "/api/auth/password-reset/confirm/",
+  passwordResetPath:
+    typeof import.meta.env.VITE_AUTH_PASSWORD_RESET_PATH === "string"
+      ? import.meta.env.VITE_AUTH_PASSWORD_RESET_PATH
+      : "/api/auth/password-reset/",
+  refreshPath:
+    typeof import.meta.env.VITE_AUTH_REFRESH_PATH === "string"
+      ? import.meta.env.VITE_AUTH_REFRESH_PATH
+      : "/api/auth/token/refresh/",
 });
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null;
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null;
 
-const toBase64Url = (value: string) =>
-  globalThis
-    .btoa(value)
-    .replaceAll("+", "-")
-    .replaceAll("/", "_")
-    .replace(/=+$/, "");
+const decodeBase64Url = (value: string) => {
+  const normalized = value.replaceAll("-", "+").replaceAll("_", "/");
+  const padding = normalized.length % 4 === 0 ? "" : "=".repeat(4 - (normalized.length % 4));
 
-const createMockJwt = (user: AuthUser, expiresAt: Date) => {
-  const issuedAtSeconds = Math.floor(Date.now() / 1000);
-  const expiresAtSeconds = Math.floor(expiresAt.getTime() / 1000);
-  const header = toBase64Url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const payload = toBase64Url(
-    JSON.stringify({
-      exp: expiresAtSeconds,
-      iat: issuedAtSeconds,
-      jti: `${user.id}-${Date.now()}`,
-      name: user.displayName,
-      roles: user.roles,
-      sub: user.id,
-      username: user.username,
-    }),
-  );
-
-  return `${header}.${payload}.mock-signature`;
+  return globalThis.atob(`${normalized}${padding}`);
 };
 
-const createMockRefreshToken = (user: AuthUser) =>
-  `refresh.${toBase64Url(JSON.stringify({ sub: user.id, username: user.username }))}.mock`;
+const getEndpoint = (path: string) => {
+  const { apiBaseUrl } = getAuthConfig();
 
-const createMockPayload = (user: AuthUser, refreshToken = createMockRefreshToken(user)): AuthPayload => {
-  const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+  if (!apiBaseUrl) {
+    throw new AuthError("auth.missingApiBaseUrl");
+  }
 
-  return {
-    refreshSession: {
-      authenticatedAt: new Date().toISOString(),
-      refreshToken,
-      tokenType: "Bearer",
-      user,
-    },
-    session: {
-      authenticatedAt: new Date().toISOString(),
-      tokens: {
-        accessToken: createMockJwt(user, expiresAt),
-        expiresAt: expiresAt.toISOString(),
-        tokenType: "Bearer",
-      },
-      user,
-    },
-  };
+  return new URL(path, apiBaseUrl).toString();
 };
 
-const readTextSafely = async (response: Response) => {
+const parseAuthError = async (response: Response, fallbackCode: AuthError["code"]) => {
+  const code = response.status === 401 && fallbackCode === "auth.loginFailed" ? "auth.invalidCredentials" : fallbackCode;
+
   try {
-    return await response.text();
+    const data: unknown = await response.clone().json();
+
+    if (isRecord(data)) {
+      if (typeof data.detail === "string" && data.detail.length > 0) {
+        return new AuthError(code, data.detail);
+      }
+
+      const firstStringValue = Object.values(data).find((value) => typeof value === "string");
+
+      if (typeof firstStringValue === "string" && firstStringValue.length > 0) {
+        return new AuthError(code, firstStringValue);
+      }
+    }
   } catch {
-    return "";
+    // Ignore body parsing errors and fall back to text.
   }
+
+  try {
+    const text = await response.text();
+
+    if (text) {
+      return new AuthError(code, text);
+    }
+  } catch {
+    // Ignore read errors and return the fallback error below.
+  }
+
+  return new AuthError(code);
 };
 
-const parseUser = (value: unknown, fallbackUser: AuthUser): AuthUser => {
-  if (!isRecord(value)) {
-    return fallbackUser;
-  }
+const buildUserFromAccessToken = (accessToken: string): AuthUser => {
+  const [, payloadSegment] = accessToken.split(".");
 
-  const username = typeof value.username === "string" ? value.username : fallbackUser.username;
-
-  return {
-    displayName: typeof value.displayName === "string" ? value.displayName : fallbackUser.displayName,
-    id: typeof value.id === "string" ? value.id : fallbackUser.id,
-    roles: Array.isArray(value.roles) ? value.roles.filter((role): role is string => typeof role === "string") : fallbackUser.roles,
-    username,
-  };
-};
-
-const parseTokens = (value: unknown): AuthTokens => {
-  if (!isRecord(value)) {
-    throw new AuthError("auth.invalidResponse");
-  }
-
-  const accessToken = value.accessToken ?? value.token;
-
-  if (typeof accessToken !== "string" || accessToken.length === 0) {
+  if (!payloadSegment) {
     throw new AuthError("auth.invalidJwt");
   }
 
-  const expiresAt =
-    typeof value.expiresAt === "string"
-      ? value.expiresAt
-      : new Date(Date.now() + (typeof value.expiresIn === "number" ? value.expiresIn : 3600) * 1000).toISOString();
+  let payload: unknown;
+
+  try {
+    payload = JSON.parse(decodeBase64Url(payloadSegment));
+  } catch {
+    throw new AuthError("auth.invalidJwt");
+  }
+
+  if (!isRecord(payload)) {
+    throw new AuthError("auth.invalidJwt");
+  }
+
+  const id = typeof payload.sub === "string" ? payload.sub : typeof payload.user_id === "string" ? payload.user_id : "";
+
+  if (!id) {
+    throw new AuthError("auth.invalidJwt");
+  }
+
+  const email = typeof payload.email === "string" ? payload.email : "";
+  const displayNameCandidates = [payload.name, payload.full_name, payload.email, payload.sub];
+  const displayName = displayNameCandidates.find((value): value is string => typeof value === "string" && value.length > 0) ?? id;
+  const roles = Array.isArray(payload.roles) ? payload.roles.filter((value): value is string => typeof value === "string") : [];
+
+  return {
+    displayName,
+    email,
+    id,
+    roles,
+  };
+};
+
+const buildSession = (accessToken: string): AuthSession => {
+  const [, payloadSegment] = accessToken.split(".");
+
+  if (!payloadSegment) {
+    throw new AuthError("auth.invalidJwt");
+  }
+
+  let payload: unknown;
+
+  try {
+    payload = JSON.parse(decodeBase64Url(payloadSegment));
+  } catch {
+    throw new AuthError("auth.invalidJwt");
+  }
+
+  if (!isRecord(payload) || typeof payload.exp !== "number") {
+    throw new AuthError("auth.invalidJwt");
+  }
 
   return {
     accessToken,
-    expiresAt,
-    tokenType: "Bearer",
+    authenticatedAt: new Date().toISOString(),
+    expiresAt: new Date(payload.exp * 1000).toISOString(),
+    user: buildUserFromAccessToken(accessToken),
   };
 };
 
-const parseRefreshToken = (value: unknown, fallbackRefreshToken?: string) => {
-  if (!isRecord(value)) {
-    return fallbackRefreshToken;
-  }
-
-  if (typeof value.refreshToken === "string" && value.refreshToken.length > 0) {
-    return value.refreshToken;
-  }
-
-  return fallbackRefreshToken;
-};
-
-const createDefaultUser = (username: string): AuthUser => ({
-  displayName: username,
-  id: username,
-  roles: [],
-  username,
-});
-
-const buildPayload = (data: unknown, fallbackUser: AuthUser, fallbackRefreshToken?: string): AuthPayload => {
-  const user = parseUser(isRecord(data) ? data.user : null, fallbackUser);
-  const refreshToken = parseRefreshToken(data, fallbackRefreshToken);
-  const tokens = parseTokens(data);
-
-  return {
-    refreshSession: refreshToken
+const persistSession = (session: AuthSession | null) => {
+  const state: AuthStoreState =
+    session === null
       ? {
-          authenticatedAt: new Date().toISOString(),
-          refreshToken,
-          tokenType: "Bearer",
-          user,
+          session: null,
+          status: "anonymous",
         }
-      : null,
-    session: {
-      authenticatedAt: new Date().toISOString(),
-      tokens,
-      user,
-    },
-  };
-};
+      : {
+          session,
+          status: "authenticated",
+        };
 
-const persistPayload = ({ refreshSession, session }: AuthPayload) => {
-  authSessionStore.set(session);
-
-  if (refreshSession) {
-    authStorage.save(refreshSession);
-  } else {
-    authStorage.clear();
-  }
-
+  authSessionStore.set(state);
   return session;
 };
 
-const clearPersistedAuth = () => {
-  authSessionStore.clear();
-  authStorage.clear();
-};
-
-const requestSession = async (endpoint: string, body: Record<string, string> | LoginCredentials) => {
-  const response = await fetch(endpoint, {
-    body: JSON.stringify(body),
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    method: "POST",
-  });
+const sendJson = async <T>(path: string, init: RequestInit, fallbackCode: AuthError["code"]) => {
+  const response = await fetch(getEndpoint(path), init);
 
   if (!response.ok) {
-    const message = await readTextSafely(response);
-    throw new AuthError("auth.loginFailed", message || undefined);
+    throw await parseAuthError(response, fallbackCode);
   }
 
-  return (await response.json()) as unknown;
+  return (await response.json()) as T;
+};
+
+const sendWithoutResponseBody = async (path: string, init: RequestInit, fallbackCode: AuthError["code"]) => {
+  const response = await fetch(getEndpoint(path), init);
+
+  if (!response.ok) {
+    throw await parseAuthError(response, fallbackCode);
+  }
 };
 
 let refreshInFlight: Promise<AuthSession | null> | null = null;
 
-const loginWithMock = async ({ password, username }: LoginCredentials) => {
-  await new Promise((resolve) => globalThis.setTimeout(resolve, 240));
+async function requestAccessToken(path: string, init: RequestInit, fallbackCode: AuthError["code"]) {
+  const data = await sendJson<AccessTokenResponse>(path, init, fallbackCode);
 
-  if (username === "admin" && password === "admin") {
-    const user: AuthUser = {
-      displayName: "Admin",
-      id: "usr_admin",
-      roles: ["admin"],
-      username: "admin",
-    };
-
-    return persistPayload(createMockPayload(user));
+  if (!isRecord(data) || typeof data.access !== "string" || data.access.length === 0) {
+    throw new AuthError("auth.invalidResponse");
   }
 
-  throw new AuthError("auth.invalidCredentials");
-};
-
-const refreshWithMock = async (refreshSession: AuthRefreshSession) => {
-  await new Promise((resolve) => globalThis.setTimeout(resolve, 120));
-
-  if (!refreshSession.refreshToken.startsWith("refresh.")) {
-    clearPersistedAuth();
-    return null;
-  }
-
-  return persistPayload(createMockPayload(refreshSession.user, refreshSession.refreshToken));
-};
-
-const loginWithServer = async (credentials: LoginCredentials, config: AuthConfig): Promise<AuthSession> => {
-  if (!config.apiBaseUrl) {
-    throw new AuthError("auth.missingApiBaseUrl");
-  }
-
-  const endpoint = new URL(config.loginPath, config.apiBaseUrl).toString();
-  const data = await requestSession(endpoint, credentials);
-
-  return persistPayload(buildPayload(data, createDefaultUser(credentials.username)));
-};
-
-const refreshWithServer = async (refreshSession: AuthRefreshSession, config: AuthConfig) => {
-  if (!config.apiBaseUrl) {
-    clearPersistedAuth();
-    return null;
-  }
-
-  const endpoint = new URL(config.refreshPath, config.apiBaseUrl).toString();
-
-  try {
-    const data = await requestSession(endpoint, { refreshToken: refreshSession.refreshToken });
-    return persistPayload(buildPayload(data, refreshSession.user, refreshSession.refreshToken));
-  } catch {
-    clearPersistedAuth();
-    return null;
-  }
-};
+  return buildSession(data.access);
+}
 
 export const authService = {
+  async bootstrapSession() {
+    authSessionStore.set({
+      session: authSessionStore.get().session,
+      status: "bootstrapping",
+    });
+
+    try {
+      return await this.refreshSession();
+    } catch {
+      this.clearSession();
+      return null;
+    }
+  },
+
   clearSession() {
-    clearPersistedAuth();
+    persistSession(null);
   },
 
   getAccessToken() {
-    return authSessionStore.get()?.tokens.accessToken ?? null;
+    return authSessionStore.get().session?.accessToken ?? null;
   },
 
   getApiBaseUrl() {
@@ -272,13 +235,49 @@ export const authService = {
   },
 
   getSession() {
-    return authSessionStore.get();
+    return authSessionStore.get().session;
+  },
+
+  getStatus() {
+    return authSessionStore.get().status;
   },
 
   async login(credentials: LoginCredentials) {
-    const config = getAuthConfig();
+    const session = await requestAccessToken(
+      getAuthConfig().loginPath,
+      {
+        body: JSON.stringify(credentials),
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      },
+      "auth.loginFailed",
+    );
 
-    return config.mode === "server" ? loginWithServer(credentials, config) : loginWithMock(credentials);
+    return persistSession(session) as AuthSession;
+  },
+
+  async logout() {
+    try {
+      await sendWithoutResponseBody(
+        getAuthConfig().logoutPath,
+        {
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
+          method: "POST",
+        },
+        "auth.logoutFailed",
+      );
+    } catch {
+      // The app must return to an anonymous state even if backend logout fails.
+    } finally {
+      this.clearSession();
+    }
   },
 
   async refreshSession() {
@@ -286,29 +285,65 @@ export const authService = {
       return refreshInFlight;
     }
 
-    const refreshSession = authStorage.load();
+    refreshInFlight = requestAccessToken(
+      getAuthConfig().refreshPath,
+      {
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+        },
+        method: "POST",
+      },
+      "auth.refreshFailed",
+    )
+      .then((session) => persistSession(session))
+      .catch((error) => {
+        this.clearSession();
 
-    if (!refreshSession) {
-      authSessionStore.clear();
-      return null;
-    }
+        if (error instanceof AuthError) {
+          return null;
+        }
 
-    const config = getAuthConfig();
-
-    refreshInFlight = (config.mode === "server"
-      ? refreshWithServer(refreshSession, config)
-      : refreshWithMock(refreshSession)).finally(() => {
-      refreshInFlight = null;
-    });
+        throw error;
+      })
+      .finally(() => {
+        refreshInFlight = null;
+      });
 
     return refreshInFlight;
   },
 
-  async restoreSession() {
-    return this.refreshSession();
+  async requestPasswordReset(payload: PasswordResetRequest) {
+    await sendWithoutResponseBody(
+      getAuthConfig().passwordResetPath,
+      {
+        body: JSON.stringify(payload),
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      },
+      "auth.passwordResetFailed",
+    );
   },
 
-  subscribe(listener: (session: AuthSession | null) => void) {
+  async resetPassword(payload: PasswordResetConfirmInput) {
+    await sendWithoutResponseBody(
+      getAuthConfig().passwordResetConfirmPath,
+      {
+        body: JSON.stringify(payload),
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      },
+      "auth.passwordResetFailed",
+    );
+  },
+
+  subscribe(listener: (state: AuthStoreState) => void) {
     return authSessionStore.subscribe(listener);
   },
 };

@@ -1,30 +1,41 @@
-import type { AuthSession } from "./authTypes";
+import type { AuthSession, AuthStatus } from "./authTypes";
 
-let currentSession: AuthSession | null = null;
-const listeners = new Set<(session: AuthSession | null) => void>();
+export interface AuthStoreState {
+  session: AuthSession | null;
+  status: AuthStatus;
+}
+
+let currentState: AuthStoreState = {
+  session: null,
+  status: "bootstrapping",
+};
+const listeners = new Set<(state: AuthStoreState) => void>();
 
 const notify = () => {
   for (const listener of listeners) {
-    listener(currentSession);
+    listener(currentState);
   }
 };
 
 export const authSessionStore = {
   clear() {
-    currentSession = null;
+    currentState = {
+      session: null,
+      status: "anonymous",
+    };
     notify();
   },
 
   get() {
-    return currentSession;
+    return currentState;
   },
 
-  set(session: AuthSession | null) {
-    currentSession = session;
+  set(state: AuthStoreState) {
+    currentState = state;
     notify();
   },
 
-  subscribe(listener: (session: AuthSession | null) => void) {
+  subscribe(listener: (state: AuthStoreState) => void) {
     listeners.add(listener);
 
     return () => {
