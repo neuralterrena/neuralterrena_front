@@ -1122,3 +1122,648 @@ a {
     justify-content: flex-start;
   }
 }
+
+:root {
+  --nt-map-font-scale: 1;
+}
+
+.terrain-console-shell {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-height: 100dvh;
+  background: var(--nt-bg-subtle);
+}
+
+.terrain-console-sidebar {
+  z-index: 12;
+
+  .console-nav {
+    button {
+      align-items: center;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--nt-radius-md);
+      color: var(--nt-fg-muted);
+      display: flex;
+      gap: var(--nt-space-1);
+      min-height: 48px;
+      padding: 0 var(--nt-space-2);
+      text-align: left;
+      transition:
+        background var(--nt-dur-fast) var(--nt-ease),
+        border-color var(--nt-dur-fast) var(--nt-ease),
+        color var(--nt-dur-fast) var(--nt-ease);
+      width: 100%;
+
+      .console-nav__label {
+        opacity: 0;
+        transition: opacity var(--nt-dur-fast) var(--nt-ease);
+        white-space: nowrap;
+      }
+
+      &:hover,
+      &[aria-pressed="true"] {
+        background: var(--nt-bg-subtle);
+        border-color: var(--nt-border);
+        color: var(--nt-color-blue);
+      }
+    }
+  }
+
+  &[data-expanded="true"] .console-nav .console-nav__label {
+    opacity: 1;
+  }
+
+  &:not([data-expanded="true"]) .console-nav button {
+    justify-content: center;
+    padding: 0;
+  }
+
+  &:not([data-expanded="true"]) .console-nav .console-nav__label {
+    display: none;
+  }
+}
+
+.terrain-console-main {
+  min-height: 100dvh;
+  min-width: 0;
+  position: relative;
+}
+
+.terrain-chip-button,
+.terrain-segmented__button,
+.terrain-primary-button,
+.terrain-speed-buttons button,
+.terrain-tab-strip button,
+.terrain-tool-button {
+  border: 1px solid var(--nt-border);
+  border-radius: var(--nt-radius-md);
+  transition:
+    background var(--nt-dur-fast) var(--nt-ease),
+    border-color var(--nt-dur-fast) var(--nt-ease),
+    color var(--nt-dur-fast) var(--nt-ease);
+
+  &:hover {
+    border-color: var(--nt-color-blue);
+  }
+}
+
+.terrain-chip-button {
+  align-items: center;
+  background: var(--nt-surface);
+  color: var(--nt-fg);
+  display: inline-flex;
+  font-weight: 700;
+  height: 44px;
+  justify-content: center;
+  width: 44px;
+
+  &[aria-pressed="true"] {
+    background: color-mix(in srgb, var(--nt-color-blue) 10%, var(--nt-surface));
+    border-color: var(--nt-color-blue);
+    color: var(--nt-color-blue);
+  }
+}
+
+.terrain-segmented {
+  background: var(--nt-surface);
+  border: 1px solid var(--nt-border);
+  border-radius: var(--nt-radius-md);
+  display: inline-flex;
+  padding: 4px;
+
+  &__button {
+    background: transparent;
+    border-color: transparent;
+    color: var(--nt-fg-muted);
+    font-size: var(--nt-text-sm);
+    font-weight: 650;
+    height: 36px;
+    padding: 0 14px;
+
+    &[data-active="true"] {
+      background: var(--nt-color-blue);
+      color: var(--nt-color-white);
+    }
+  }
+}
+
+.terrain-console-map-area {
+  min-height: 100%;
+  position: relative;
+}
+
+.terrain-map-viewport {
+  background: var(--nt-color-black);
+  border: 1px solid var(--nt-border);
+  inset: 0;
+  overflow: hidden;
+  position: absolute;
+}
+
+.terrain-map-canvas {
+  height: 100%;
+  width: 100%;
+
+  &[data-cursor="crosshair"] {
+    cursor: crosshair;
+  }
+}
+
+.terrain-map-night-overlay {
+  background: rgba(2, 4, 14, 1);
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.terrain-console-map-actions,
+.terrain-console-tools,
+.terrain-time-panel-popup,
+.terrain-console-right,
+.terrain-console-footer,
+.terrain-tool-status {
+  pointer-events: none;
+  position: absolute;
+  z-index: 4;
+
+  > * {
+    pointer-events: auto;
+  }
+}
+
+.terrain-console-map-actions {
+  align-items: center;
+  display: flex;
+  gap: var(--nt-space-1);
+  z-index: 6;
+  right: calc(var(--nt-space-3) * 2);
+  top: calc(var(--nt-space-3) * 2);
+}
+
+.terrain-console-tools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nt-space-1);
+  left: calc(var(--nt-space-3) * 2);
+  top: calc(var(--nt-space-3) * 2);
+}
+
+.terrain-tool-button {
+  align-items: center;
+  background: color-mix(in srgb, var(--nt-surface) 92%, transparent);
+  color: var(--nt-fg);
+  display: inline-flex;
+  gap: var(--nt-space-1);
+  min-height: 44px;
+  padding: 0 12px;
+
+  span {
+    font-size: var(--nt-text-sm);
+    font-weight: 650;
+  }
+
+  &[data-active="true"] {
+    background: color-mix(in srgb, var(--nt-color-blue) 14%, var(--nt-surface));
+    border-color: var(--nt-color-blue);
+    color: var(--nt-color-blue);
+  }
+}
+
+.terrain-tool-status {
+  background: color-mix(in srgb, var(--nt-surface) 96%, transparent);
+  border: 1px solid var(--nt-border);
+  border-radius: var(--nt-radius-md);
+  color: var(--nt-fg);
+  font-size: var(--nt-text-sm);
+  font-weight: 600;
+  left: calc(var(--nt-space-3) * 2 + 12px);
+  padding: 10px 12px;
+  pointer-events: none;
+  top: calc(var(--nt-space-3) * 8);
+}
+
+.terrain-time-panel-popup {
+  left: calc(var(--nt-space-3) * 2 + 132px);
+  top: calc(var(--nt-space-3) * 2);
+  z-index: 6;
+  width: min(520px, calc(100% - 420px));
+}
+
+.terrain-console-right {
+  display: grid;
+  gap: var(--nt-space-2);
+  max-height: calc(100% - 32px);
+  overflow: auto;
+  padding-right: 4px;
+  z-index: 5;
+  right: calc(var(--nt-space-3) * 2);
+  top: calc(var(--nt-space-3) * 2);
+  width: min(360px, calc(100% - 32px));
+}
+
+.terrain-panel-card {
+  background: color-mix(in srgb, var(--nt-surface) 96%, transparent);
+  border: 1px solid var(--nt-border);
+  border-radius: var(--nt-radius-lg);
+  padding: var(--nt-space-2);
+
+  h2 {
+    font-size: calc(var(--nt-text-base) * var(--nt-map-font-scale));
+    line-height: 1.2;
+    margin: 0 0 var(--nt-space-2);
+  }
+}
+
+.terrain-metric-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.terrain-metric-card {
+  min-height: 0;
+}
+
+.terrain-tab-strip {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: var(--nt-space-2);
+
+  button {
+    background: transparent;
+    color: var(--nt-fg-muted);
+    font-size: var(--nt-text-xs);
+    font-weight: 700;
+    min-height: 38px;
+
+    &[data-active="true"] {
+      background: color-mix(in srgb, var(--nt-color-blue) 12%, var(--nt-surface));
+      border-color: var(--nt-color-blue);
+      color: var(--nt-color-blue);
+    }
+  }
+}
+
+.terrain-data-grid,
+.terrain-analysis-grid {
+  display: grid;
+  gap: var(--nt-space-1);
+
+  dl {
+    display: grid;
+    gap: var(--nt-space-1);
+    margin: 0;
+  }
+
+  dt {
+    color: var(--nt-fg-muted);
+    font-size: var(--nt-text-xs);
+    margin-bottom: 2px;
+  }
+
+  dd {
+    font-family: var(--nt-font-mono);
+    font-size: var(--nt-text-sm);
+    margin: 0;
+  }
+}
+
+.terrain-analysis-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.terrain-status-badge {
+  align-items: center;
+  border: 1px solid var(--nt-border);
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: var(--nt-text-xs);
+  font-weight: 700;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 12px;
+  width: fit-content;
+
+  &[data-phase="day"] {
+    background: color-mix(in srgb, var(--nt-color-yellow) 16%, var(--nt-surface));
+    border-color: color-mix(in srgb, var(--nt-color-yellow) 30%, var(--nt-border));
+  }
+
+  &[data-phase="civil"],
+  &[data-phase="nautical"],
+  &[data-phase="astronomical"],
+  &[data-phase="night"] {
+    background: color-mix(in srgb, var(--nt-color-blue) 10%, var(--nt-surface));
+    border-color: color-mix(in srgb, var(--nt-color-blue) 24%, var(--nt-border));
+  }
+}
+
+.terrain-note {
+  color: var(--nt-fg-muted);
+  font-size: var(--nt-text-sm);
+  margin: 0;
+}
+
+.terrain-ops-list {
+  display: grid;
+  gap: 6px;
+}
+
+.terrain-ops-item {
+  align-items: center;
+  background: var(--nt-bg-subtle);
+  border-radius: var(--nt-radius-md);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--nt-space-1);
+  padding: 10px 12px;
+
+  span {
+    font-size: var(--nt-text-sm);
+  }
+
+  strong {
+    border-radius: 999px;
+    font-size: var(--nt-text-xs);
+    font-weight: 700;
+    padding: 4px 10px;
+
+    &[data-status="fav"] {
+      background: color-mix(in srgb, var(--nt-color-yellow) 24%, var(--nt-surface));
+      color: var(--nt-color-black);
+    }
+
+    &[data-status="mar"] {
+      background: color-mix(in srgb, var(--nt-color-orange) 18%, var(--nt-surface));
+      color: var(--nt-color-orange);
+    }
+
+    &[data-status="unf"] {
+      background: color-mix(in srgb, var(--nt-color-red) 12%, var(--nt-surface));
+      color: var(--nt-color-red);
+    }
+  }
+}
+
+.terrain-engine-row {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  margin-bottom: var(--nt-space-1);
+
+  span:last-child {
+    font-size: var(--nt-text-sm);
+    font-weight: 600;
+  }
+}
+
+.terrain-engine-dot {
+  background: var(--nt-color-yellow);
+  border-radius: 999px;
+  display: inline-block;
+  height: 10px;
+  width: 10px;
+
+  &[data-status="idle"] {
+    background: var(--nt-color-blue);
+  }
+}
+
+.terrain-progress {
+  background: var(--nt-border);
+  border-radius: 999px;
+  height: 6px;
+  margin-bottom: var(--nt-space-2);
+  overflow: hidden;
+
+  div {
+    background: var(--nt-color-blue);
+    height: 100%;
+  }
+}
+
+.terrain-slider-field,
+.terrain-date-field {
+  align-items: center;
+  display: grid;
+  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) 88px;
+  margin-top: var(--nt-space-1);
+
+  span {
+    color: var(--nt-fg-muted);
+    font-size: var(--nt-text-xs);
+    grid-column: 1 / -1;
+  }
+
+  input[type="range"] {
+    accent-color: var(--nt-color-blue);
+    width: 100%;
+  }
+
+  input[type="date"] {
+    background: var(--nt-surface);
+    border: 1px solid var(--nt-border);
+    border-radius: var(--nt-radius-md);
+    min-height: 44px;
+    padding: 0 12px;
+  }
+
+  strong {
+    font-family: var(--nt-font-mono);
+    font-size: var(--nt-text-sm);
+    justify-self: end;
+  }
+}
+
+.terrain-toggle-line {
+  align-items: center;
+  display: flex;
+  gap: var(--nt-space-1);
+  margin-top: var(--nt-space-2);
+
+  span {
+    font-size: var(--nt-text-sm);
+  }
+}
+
+.terrain-console-footer {
+  align-items: end;
+  bottom: calc(var(--nt-space-3) * 2);
+  display: flex;
+  left: calc(var(--nt-space-3) * 2);
+}
+
+.terrain-coordinates {
+  background: color-mix(in srgb, var(--nt-surface) 96%, transparent);
+  border: 1px solid var(--nt-border);
+  border-radius: var(--nt-radius-md);
+  display: flex;
+  gap: var(--nt-space-1);
+  padding: 10px 12px;
+
+  span {
+    font-family: var(--nt-font-mono);
+    font-size: var(--nt-text-xs);
+  }
+}
+
+.terrain-time-panel {
+  background: color-mix(in srgb, var(--nt-surface) 96%, transparent);
+  border: 1px solid var(--nt-border);
+  border-radius: var(--nt-radius-lg);
+  box-shadow: 0 18px 40px rgba(12, 24, 40, 0.18);
+  display: grid;
+  gap: var(--nt-space-1);
+  padding: var(--nt-space-2);
+  width: 100%;
+
+  input[type="range"] {
+    accent-color: var(--nt-color-blue);
+    width: 100%;
+  }
+
+  &__actions {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    gap: var(--nt-space-2);
+  }
+
+  &__clock {
+    align-items: baseline;
+    display: flex;
+    gap: var(--nt-space-1);
+    justify-content: center;
+
+    strong {
+      font-family: var(--nt-font-mono);
+      font-size: calc(var(--nt-text-3xl) * var(--nt-map-font-scale));
+      font-weight: 700;
+    }
+
+    span {
+      color: var(--nt-fg-muted);
+      font-size: var(--nt-text-sm);
+    }
+  }
+
+  &__ticks {
+    color: var(--nt-fg-muted);
+    display: flex;
+    font-family: var(--nt-font-mono);
+    font-size: var(--nt-text-xs);
+    justify-content: space-between;
+  }
+}
+
+.terrain-primary-button {
+  background: var(--nt-cta-primary-bg);
+  color: var(--nt-cta-primary-fg);
+  min-height: 44px;
+  padding: 0 16px;
+
+  &:hover {
+    background: var(--nt-cta-primary-hover);
+  }
+}
+
+.terrain-speed-buttons {
+  display: inline-flex;
+  gap: 4px;
+
+  button {
+    background: transparent;
+    color: var(--nt-fg-muted);
+    min-height: 36px;
+    padding: 0 12px;
+
+    &[data-active="true"] {
+      background: color-mix(in srgb, var(--nt-color-blue) 10%, var(--nt-surface));
+      border-color: var(--nt-color-blue);
+      color: var(--nt-color-blue);
+    }
+  }
+}
+
+@media (max-width: 1200px) {
+  .terrain-console-right {
+    width: min(320px, calc(100% - 32px));
+  }
+
+  .terrain-time-panel-popup {
+    width: min(420px, calc(100% - 400px));
+  }
+}
+
+@media (max-width: 1040px) {
+  .terrain-console-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .terrain-console-map-area {
+    min-height: 100dvh;
+  }
+
+  .terrain-console-sidebar {
+    border-bottom: 1px solid var(--nt-border);
+    border-right: 0;
+    width: 100%;
+
+    &[data-expanded="true"] {
+      width: 100%;
+    }
+  }
+}
+
+@media (max-width: 720px) {
+  .terrain-console-map-actions,
+  .terrain-console-tools,
+  .terrain-time-panel-popup,
+  .terrain-console-right,
+  .terrain-console-footer {
+    left: calc(var(--nt-space-2) * 2);
+    right: calc(var(--nt-space-2) * 2);
+  }
+
+  .terrain-console-map-actions {
+    justify-content: flex-end;
+    top: calc(var(--nt-space-2) * 2);
+  }
+
+  .terrain-console-tools {
+    flex-direction: row;
+    flex-wrap: wrap;
+    top: calc(var(--nt-space-2) * 2);
+  }
+
+  .terrain-time-panel-popup {
+    top: calc(var(--nt-space-2) * 2 + 56px);
+    width: auto;
+  }
+
+  .terrain-console-right {
+    max-height: none;
+    position: relative;
+    right: auto;
+    top: auto;
+    width: 100%;
+    z-index: 5;
+    margin-top: 96px;
+  }
+
+  .terrain-console-footer {
+    bottom: calc(var(--nt-space-2) * 2);
+  }
+
+  .terrain-analysis-grid,
+  .terrain-metric-grid,
+  .terrain-tab-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .terrain-time-panel__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

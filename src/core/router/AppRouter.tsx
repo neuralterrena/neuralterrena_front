@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
-import { ConsoleHome } from "@/features/console";
 import {
   ForgotPasswordPage,
   LoginPage,
@@ -8,6 +7,7 @@ import {
   ResetPasswordConfirmPage,
   useAuth,
 } from "@/features/auth";
+import { TerrainConsolePage } from "@/features/terrain-console";
 import { registerUnauthorizedHandler } from "@/features/auth/model/authNavigation";
 
 function AuthNavigationSync() {
@@ -43,7 +43,7 @@ export function AppRouter() {
         <Route
           element={
             <RequireAuth>
-              <ConsoleHome />
+              <TerrainConsolePage />
             </RequireAuth>
           }
           path="/"

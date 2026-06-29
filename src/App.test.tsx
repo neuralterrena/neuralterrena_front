@@ -3,6 +3,32 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "@/App";
 import { authService } from "@/features/auth/model/authService";
 
+vi.mock("@/features/terrain-console", async () => {
+  const React = await import("react");
+  const { useLogout } = await import("@/features/auth");
+
+  return {
+    TerrainConsolePage: () => {
+      const [menuOpen, setMenuOpen] = React.useState(false);
+      const logout = useLogout();
+
+      return (
+        <main>
+          <h1>Superficie operativa</h1>
+          <button aria-label="Menú de usuario" onClick={() => setMenuOpen((current) => !current)} type="button">
+            Menú
+          </button>
+          {menuOpen ? (
+            <button onClick={() => void logout()} type="button">
+              Salir
+            </button>
+          ) : null}
+        </main>
+      );
+    },
+  };
+});
+
 const createAccessToken = (subject: string, email = "operator@neuralterrena.com") => {
   const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
   const payload = btoa(
@@ -59,7 +85,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Entrar" }));
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Panel operativo" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Superficie operativa" })).toBeInTheDocument();
     });
   });
 
@@ -120,7 +146,7 @@ describe("App", () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Panel operativo" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Superficie operativa" })).toBeInTheDocument();
     });
   });
 
@@ -171,10 +197,9 @@ describe("App", () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Panel operativo" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Superficie operativa" })).toBeInTheDocument();
     });
 
-    fireEvent.mouseEnter(screen.getByLabelText("Navegación principal"));
     fireEvent.click(screen.getByRole("button", { name: "Menú de usuario" }));
     fireEvent.click(screen.getAllByRole("button", { name: "Salir" })[0]);
 
