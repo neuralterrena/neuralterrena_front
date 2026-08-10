@@ -39,7 +39,12 @@ vi.mock("../model/useTerrainConsole", () => ({
     activeTool: "nav",
     basemap: "topo",
     cursorPoint: { lat: 43.17, lng: -4.85 },
-    engineState: { status: "idle", message: "Listo", progress: 0, loadedTileCount: 4 },
+    engineState: {
+      status: "idle",
+      message: "Listo",
+      progress: 0,
+      loadedTileCount: 4,
+    },
     fontScaleLarge: false,
     isPlaying: false,
     losPendingPoint: null,
@@ -47,7 +52,12 @@ vi.mock("../model/useTerrainConsole", () => ({
     mcooOpacity: 0.5,
     mcooOverlay: null,
     mcooVisible: false,
-    metrics: { activeLayers: 1, timeWindow: "12 h", criticalAlerts: 0, traceableOutputs: 8 },
+    metrics: {
+      activeLayers: 1,
+      timeWindow: "12 h",
+      criticalAlerts: 0,
+      traceableOutputs: 8,
+    },
     moonState: {
       altitude: 10,
       azimuth: 120,
@@ -112,7 +122,6 @@ vi.mock("../model/useTerrainConsole", () => ({
     setActiveTab: vi.fn(),
     setActiveTool: vi.fn(),
     setBasemap: vi.fn(),
-    setFontScaleLarge: vi.fn(),
     setIsPlaying: vi.fn(),
     setMcooOpacity: vi.fn(),
     setObserverHeight: vi.fn(),
@@ -138,7 +147,9 @@ describe("TerrainConsolePage", () => {
     render(<TerrainConsolePage />);
 
     expect(screen.getByTestId("openglobus-viewport")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Topográfico" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Topográfico" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Motor y configuración")).toBeInTheDocument();
   });
 });

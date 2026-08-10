@@ -8,6 +8,7 @@ import {
   useAuth,
 } from "@/features/auth";
 import { TerrainConsolePage } from "@/features/terrain-console";
+import { AuthenticatedAppLayout } from "@/core/ui/AuthenticatedAppLayout";
 import { registerUnauthorizedHandler } from "@/features/auth/model/authNavigation";
 
 function AuthNavigationSync() {
@@ -30,7 +31,9 @@ export function AppRouter() {
   const { isReady } = useAuth();
 
   if (!isReady) {
-    return <div className="app-loading-state" role="status" aria-live="polite" />;
+    return (
+      <div className="app-loading-state" role="status" aria-live="polite" />
+    );
   }
 
   return (
@@ -43,11 +46,13 @@ export function AppRouter() {
         <Route
           element={
             <RequireAuth>
-              <TerrainConsolePage />
+              <AuthenticatedAppLayout />
             </RequireAuth>
           }
           path="/"
-        />
+        >
+          <Route index element={<TerrainConsolePage />} />
+        </Route>
         <Route element={<Navigate replace to="/" />} path="*" />
       </Routes>
     </>

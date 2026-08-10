@@ -1,9 +1,9 @@
-import { Eye, EyeOff, LockKeyhole, LogIn, Mail, Server } from "lucide-react";
+import { Eye, EyeOff, LockKeyhole, LogIn, Mail } from "lucide-react";
 import { type FormEvent, useId, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AuthError } from "../model/authTypes";
 import { useAuth } from "../model/useAuth";
-import { useLanguage, useTheme } from "@/shared/providers";
+import { useLanguage } from "@/shared/providers";
 import { AuthLayout } from "./AuthLayout";
 
 const getRedirectPath = (state: unknown) => {
@@ -30,7 +30,6 @@ export function LoginPage() {
   const passwordId = useId();
   const { isAuthenticating, login } = useAuth();
   const { t } = useLanguage();
-  const { resolvedTheme } = useTheme();
   const [email, setEmail] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [password, setPassword] = useState("");

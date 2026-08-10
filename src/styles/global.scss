@@ -202,9 +202,24 @@ a {
     opacity: 0.2;
     position: absolute;
     background:
-      linear-gradient(120deg, transparent 0 36%, rgba(249, 178, 51, 0.85) 36% 37%, transparent 37%),
-      linear-gradient(152deg, transparent 0 46%, rgba(232, 93, 47, 0.85) 46% 47%, transparent 47%),
-      linear-gradient(22deg, transparent 0 62%, rgba(30, 79, 130, 0.9) 62% 63%, transparent 63%);
+      linear-gradient(
+        120deg,
+        transparent 0 36%,
+        rgba(249, 178, 51, 0.85) 36% 37%,
+        transparent 37%
+      ),
+      linear-gradient(
+        152deg,
+        transparent 0 46%,
+        rgba(232, 93, 47, 0.85) 46% 47%,
+        transparent 47%
+      ),
+      linear-gradient(
+        22deg,
+        transparent 0 62%,
+        rgba(30, 79, 130, 0.9) 62% 63%,
+        transparent 63%
+      );
   }
 
   &__grid {
@@ -728,8 +743,11 @@ a {
 }
 
 .console-utility-panel--picker {
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--nt-surface) 98%, white), color-mix(in srgb, var(--nt-surface) 94%, transparent));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--nt-surface) 98%, white),
+    color-mix(in srgb, var(--nt-surface) 94%, transparent)
+  );
   border-radius: 18px;
   min-width: 224px;
   padding: var(--nt-space-1);
@@ -877,7 +895,8 @@ a {
 
 .console-user-card {
   background: color-mix(in srgb, var(--nt-color-blue) 6%, var(--nt-surface));
-  border: 1px solid color-mix(in srgb, var(--nt-color-blue) 16%, var(--nt-border));
+  border: 1px solid
+    color-mix(in srgb, var(--nt-color-blue) 16%, var(--nt-border));
   border-radius: 16px;
   padding: var(--nt-space-2);
 
@@ -924,70 +943,6 @@ a {
   min-width: 220px;
   top: auto;
   transform: none;
-}
-
-.console-main {
-  display: grid;
-  gap: var(--nt-space-3);
-  grid-template-rows: auto auto 1fr;
-  padding: var(--nt-space-4);
-}
-
-.console-topbar {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-  gap: var(--nt-space-3);
-}
-
-.session-panel {
-  align-items: center;
-  background: var(--nt-surface);
-  border: 1px solid var(--nt-border);
-  border-radius: var(--nt-radius-md);
-  display: flex;
-  justify-content: space-between;
-  gap: var(--nt-space-3);
-  padding: var(--nt-space-3);
-
-  h2 {
-    font-size: var(--nt-text-2xl);
-    font-weight: 720;
-    letter-spacing: 0;
-    line-height: 1.2;
-    margin: var(--nt-space-half) 0 0;
-  }
-
-  p {
-    color: var(--nt-fg-muted);
-    margin: var(--nt-space-1) 0 0;
-  }
-
-  > div,
-  dl {
-    align-items: center;
-    display: flex;
-    gap: var(--nt-space-2);
-  }
-
-  > div > svg {
-    color: var(--nt-color-blue);
-  }
-
-  dl {
-    margin: 0;
-  }
-
-  dt {
-    color: var(--nt-fg-muted);
-    font-size: var(--nt-text-sm);
-  }
-
-  dd {
-    font-family: var(--nt-font-mono);
-    font-size: var(--nt-text-sm);
-    margin: var(--nt-space-half) 0 0;
-  }
 }
 
 .metric-grid {
@@ -1078,7 +1033,6 @@ a {
 @media (max-width: 720px) {
   .login-visual,
   .login-auth,
-  .console-main,
   .console-sidebar {
     padding: var(--nt-space-2);
   }
@@ -1094,15 +1048,12 @@ a {
     width: 100%;
   }
 
-  .login-visual__top,
-  .console-topbar,
-  .session-panel {
+  .login-visual__top {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .login-visual__copy h1,
-  .console-topbar h1 {
+  .login-visual__copy h1 {
     font-size: var(--nt-text-3xl);
   }
 
@@ -1119,76 +1070,15 @@ a {
     padding: var(--nt-space-3);
   }
 
-  .session-panel dl {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
   .toolbar-switchers,
   .toolbar-switchers--stacked {
     justify-content: flex-start;
   }
 }
 
-:root {
-  --nt-map-font-scale: 1;
-}
-
 .terrain-console-shell {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
   min-height: 100dvh;
   background: var(--nt-bg-subtle);
-}
-
-.terrain-console-sidebar {
-  z-index: 12;
-
-  .console-nav {
-    button {
-      align-items: center;
-      background: transparent;
-      border: 1px solid transparent;
-      border-radius: var(--nt-radius-md);
-      color: var(--nt-fg-muted);
-      display: flex;
-      gap: var(--nt-space-1);
-      min-height: 48px;
-      padding: 0 var(--nt-space-2);
-      text-align: left;
-      transition:
-        background var(--nt-dur-fast) var(--nt-ease),
-        border-color var(--nt-dur-fast) var(--nt-ease),
-        color var(--nt-dur-fast) var(--nt-ease);
-      width: 100%;
-
-      .console-nav__label {
-        opacity: 0;
-        transition: opacity var(--nt-dur-fast) var(--nt-ease);
-        white-space: nowrap;
-      }
-
-      &:hover,
-      &[aria-pressed="true"] {
-        background: var(--nt-bg-subtle);
-        border-color: var(--nt-border);
-        color: var(--nt-color-blue);
-      }
-    }
-  }
-
-  &[data-expanded="true"] .console-nav .console-nav__label {
-    opacity: 1;
-  }
-
-  &:not([data-expanded="true"]) .console-nav button {
-    justify-content: center;
-    padding: 0;
-  }
-
-  &:not([data-expanded="true"]) .console-nav .console-nav__label {
-    display: none;
-  }
 }
 
 .terrain-console-main {
@@ -1376,7 +1266,7 @@ a {
   padding: var(--nt-space-2);
 
   h2 {
-    font-size: calc(var(--nt-text-base) * var(--nt-map-font-scale));
+    font-size: var(--nt-text-base);
     line-height: 1.2;
     margin: 0 0 var(--nt-space-2);
   }
@@ -1404,7 +1294,11 @@ a {
     min-height: 38px;
 
     &[data-active="true"] {
-      background: color-mix(in srgb, var(--nt-color-blue) 12%, var(--nt-surface));
+      background: color-mix(
+        in srgb,
+        var(--nt-color-blue) 12%,
+        var(--nt-surface)
+      );
       border-color: var(--nt-color-blue);
       color: var(--nt-color-blue);
     }
@@ -1452,8 +1346,16 @@ a {
   width: fit-content;
 
   &[data-phase="day"] {
-    background: color-mix(in srgb, var(--nt-color-yellow) 16%, var(--nt-surface));
-    border-color: color-mix(in srgb, var(--nt-color-yellow) 30%, var(--nt-border));
+    background: color-mix(
+      in srgb,
+      var(--nt-color-yellow) 16%,
+      var(--nt-surface)
+    );
+    border-color: color-mix(
+      in srgb,
+      var(--nt-color-yellow) 30%,
+      var(--nt-border)
+    );
   }
 
   &[data-phase="civil"],
@@ -1461,7 +1363,11 @@ a {
   &[data-phase="astronomical"],
   &[data-phase="night"] {
     background: color-mix(in srgb, var(--nt-color-blue) 10%, var(--nt-surface));
-    border-color: color-mix(in srgb, var(--nt-color-blue) 24%, var(--nt-border));
+    border-color: color-mix(
+      in srgb,
+      var(--nt-color-blue) 24%,
+      var(--nt-border)
+    );
   }
 }
 
@@ -1496,17 +1402,29 @@ a {
     padding: 4px 10px;
 
     &[data-status="fav"] {
-      background: color-mix(in srgb, var(--nt-color-yellow) 24%, var(--nt-surface));
+      background: color-mix(
+        in srgb,
+        var(--nt-color-yellow) 24%,
+        var(--nt-surface)
+      );
       color: var(--nt-color-black);
     }
 
     &[data-status="mar"] {
-      background: color-mix(in srgb, var(--nt-color-orange) 18%, var(--nt-surface));
+      background: color-mix(
+        in srgb,
+        var(--nt-color-orange) 18%,
+        var(--nt-surface)
+      );
       color: var(--nt-color-orange);
     }
 
     &[data-status="unf"] {
-      background: color-mix(in srgb, var(--nt-color-red) 12%, var(--nt-surface));
+      background: color-mix(
+        in srgb,
+        var(--nt-color-red) 12%,
+        var(--nt-surface)
+      );
       color: var(--nt-color-red);
     }
   }
@@ -1645,7 +1563,7 @@ a {
 
     strong {
       font-family: var(--nt-font-mono);
-      font-size: calc(var(--nt-text-3xl) * var(--nt-map-font-scale));
+      font-size: var(--nt-text-3xl);
       font-weight: 700;
     }
 
@@ -1686,7 +1604,11 @@ a {
     padding: 0 12px;
 
     &[data-active="true"] {
-      background: color-mix(in srgb, var(--nt-color-blue) 10%, var(--nt-surface));
+      background: color-mix(
+        in srgb,
+        var(--nt-color-blue) 10%,
+        var(--nt-surface)
+      );
       border-color: var(--nt-color-blue);
       color: var(--nt-color-blue);
     }
@@ -1704,22 +1626,8 @@ a {
 }
 
 @media (max-width: 1040px) {
-  .terrain-console-shell {
-    grid-template-columns: 1fr;
-  }
-
   .terrain-console-map-area {
     min-height: 100dvh;
-  }
-
-  .terrain-console-sidebar {
-    border-bottom: 1px solid var(--nt-border);
-    border-right: 0;
-    width: 100%;
-
-    &[data-expanded="true"] {
-      width: 100%;
-    }
   }
 }
 

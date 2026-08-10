@@ -18,7 +18,8 @@ export const translations = {
     "auth.email": "Email",
     "auth.emailPlaceholder": "operator@neuralterrena.com",
     "auth.forgotPassword": "Forgot password?",
-    "auth.forgotPasswordDescription": "Request a reset link to regain access without exposing account existence.",
+    "auth.forgotPasswordDescription":
+      "Request a reset link to regain access without exposing account existence.",
     "auth.forgotPasswordTitle": "Reset password",
     "auth.invalidCredentials": "Invalid email or password.",
     "auth.invalidJwt": "The server did not return a valid JWT.",
@@ -32,8 +33,10 @@ export const translations = {
     "auth.password": "Password",
     "auth.passwordMismatch": "Passwords do not match.",
     "auth.passwordResetFailed": "Password reset could not be completed.",
-    "auth.passwordResetInvalidLink": "The password reset link is invalid or incomplete.",
-    "auth.passwordResetRequested": "If the account exists, a reset email has been sent.",
+    "auth.passwordResetInvalidLink":
+      "The password reset link is invalid or incomplete.",
+    "auth.passwordResetRequested":
+      "If the account exists, a reset email has been sent.",
     "auth.passwordResetSubmit": "Send reset link",
     "auth.passwordHide": "Hide password",
     "auth.passwordShow": "Show password",
@@ -42,8 +45,10 @@ export const translations = {
     "auth.backToLogin": "Back to sign in",
     "auth.confirmPassword": "Confirm password",
     "auth.confirmPasswordPlaceholder": "Repeat the new password",
-    "auth.resetPasswordDescription": "Apply a new password using the reset link parameters.",
-    "auth.resetPasswordCompleted": "Password updated. Sign in with the new credentials.",
+    "auth.resetPasswordDescription":
+      "Apply a new password using the reset link parameters.",
+    "auth.resetPasswordCompleted":
+      "Password updated. Sign in with the new credentials.",
     "auth.resetPasswordSubmit": "Update password",
     "auth.resetPasswordTitle": "Choose a new password",
     "auth.sessionExpired": "Your session has expired.",
@@ -54,7 +59,8 @@ export const translations = {
     "auth.unauthorized": "Authentication is required.",
     "auth.username": "Username",
     "auth.usernamePlaceholder": "admin",
-    "auth.visualDescription": "A synchronized layer for terrain, light, visibility, and time.",
+    "auth.visualDescription":
+      "A synchronized layer for terrain, light, visibility, and time.",
     "auth.visualEyebrow": "Terrain Intelligence",
     "auth.missingApiBaseUrl": "VITE_API_BASE_URL is not configured.",
     "console.activeLayers": "Active layers",
@@ -75,6 +81,9 @@ export const translations = {
     "console.signOut": "Sign out",
     "console.terrain": "Terrain",
     "console.timeWindow": "Time window",
+    "console.typography": "Text",
+    "console.typographyDecrease": "Decrease typography",
+    "console.typographyIncrease": "Increase typography",
     "console.traceableOutputs": "Traceable outputs",
     "console.userMenu": "User menu",
     "console.userProfile": "Profile",
@@ -96,7 +105,8 @@ export const translations = {
     "auth.email": "Correo",
     "auth.emailPlaceholder": "operador@neuralterrena.com",
     "auth.forgotPassword": "¿Olvidaste tu clave?",
-    "auth.forgotPasswordDescription": "Solicita un enlace de recuperación sin exponer si la cuenta existe.",
+    "auth.forgotPasswordDescription":
+      "Solicita un enlace de recuperación sin exponer si la cuenta existe.",
     "auth.forgotPasswordTitle": "Restablecer clave",
     "auth.invalidCredentials": "Correo o clave no válidos.",
     "auth.invalidJwt": "El servidor no devolvió un JWT válido.",
@@ -109,9 +119,12 @@ export const translations = {
     "auth.newPasswordPlaceholder": "Introduce una nueva clave",
     "auth.password": "Clave",
     "auth.passwordMismatch": "Las claves no coinciden.",
-    "auth.passwordResetFailed": "No se pudo completar el restablecimiento de clave.",
-    "auth.passwordResetInvalidLink": "El enlace de restablecimiento es inválido o incompleto.",
-    "auth.passwordResetRequested": "Si la cuenta existe, se ha enviado un correo de recuperación.",
+    "auth.passwordResetFailed":
+      "No se pudo completar el restablecimiento de clave.",
+    "auth.passwordResetInvalidLink":
+      "El enlace de restablecimiento es inválido o incompleto.",
+    "auth.passwordResetRequested":
+      "Si la cuenta existe, se ha enviado un correo de recuperación.",
     "auth.passwordResetSubmit": "Enviar enlace",
     "auth.passwordHide": "Ocultar clave",
     "auth.passwordShow": "Mostrar clave",
@@ -120,8 +133,10 @@ export const translations = {
     "auth.backToLogin": "Volver a iniciar sesión",
     "auth.confirmPassword": "Confirmar clave",
     "auth.confirmPasswordPlaceholder": "Repite la nueva clave",
-    "auth.resetPasswordDescription": "Aplica una nueva clave usando los parámetros del enlace de recuperación.",
-    "auth.resetPasswordCompleted": "La clave se actualizó. Inicia sesión con las nuevas credenciales.",
+    "auth.resetPasswordDescription":
+      "Aplica una nueva clave usando los parámetros del enlace de recuperación.",
+    "auth.resetPasswordCompleted":
+      "La clave se actualizó. Inicia sesión con las nuevas credenciales.",
     "auth.resetPasswordSubmit": "Actualizar clave",
     "auth.resetPasswordTitle": "Elegir nueva clave",
     "auth.sessionExpired": "La sesión ha expirado.",
@@ -132,7 +147,8 @@ export const translations = {
     "auth.unauthorized": "La autenticación es obligatoria.",
     "auth.username": "Usuario",
     "auth.usernamePlaceholder": "admin",
-    "auth.visualDescription": "Una capa sincronizada para terreno, luz, visibilidad y tiempo.",
+    "auth.visualDescription":
+      "Una capa sincronizada para terreno, luz, visibilidad y tiempo.",
     "auth.visualEyebrow": "Terrain Intelligence",
     "auth.missingApiBaseUrl": "Falta configurar VITE_API_BASE_URL.",
     "console.activeLayers": "Capas activas",
@@ -153,6 +169,9 @@ export const translations = {
     "console.signOut": "Salir",
     "console.terrain": "Terreno",
     "console.timeWindow": "Ventana temporal",
+    "console.typography": "Texto",
+    "console.typographyDecrease": "Disminuir tipografía",
+    "console.typographyIncrease": "Aumentar tipografía",
     "console.traceableOutputs": "Salidas trazables",
     "console.userMenu": "Menú de usuario",
     "console.userProfile": "Perfil",
@@ -161,4 +180,5 @@ export const translations = {
   },
 } as const;
 
-export type TranslationKey = keyof (typeof translations)[typeof defaultLanguage];
+export type TranslationKey =
+  keyof (typeof translations)[typeof defaultLanguage];

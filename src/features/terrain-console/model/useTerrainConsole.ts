@@ -1,15 +1,18 @@
-import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   analyzePoint,
   computeLos,
   computeMcooOverlay,
   computeViewshed,
 } from "./analysis";
-import {
-  buildMoonState,
-  buildSolarState,
-  getNightOpacity,
-} from "./astronomy";
+import { buildMoonState, buildSolarState, getNightOpacity } from "./astronomy";
 import { TerrainDem } from "./demService";
 import { evaluateOperations, getWeather } from "./weather";
 import type {
@@ -32,7 +35,6 @@ import type {
 
 const UTC_OFFSET = 2;
 const INITIAL_POINT = { lat: 43.17, lng: -4.85 };
-
 function minutesToClock(minutes: number) {
   return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(Math.floor(minutes % 60)).padStart(2, "0")}`;
 }
@@ -74,18 +76,22 @@ export function useTerrainConsole() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [speedMultiplier, setSpeedMultiplier] = useState<SpeedMultiplier>(1);
   const [terrainExaggeration, setTerrainExaggeration] = useState(1.5);
-  const [fontScaleLarge, setFontScaleLarge] = useState(false);
   const [mcooOpacity, setMcooOpacity] = useState(0.5);
   const [viewshedOpacity, setViewshedOpacity] = useState(0.65);
   const [viewshedRadiusKm, setViewshedRadiusKm] = useState(5);
   const [observerHeight, setObserverHeight] = useState(2);
   const [viewshedLiveMode, setViewshedLiveMode] = useState(false);
   const [mcooVisible, setMcooVisible] = useState(false);
-  const [viewshedState, setViewshedState] = useState<ViewshedState | null>(null);
-  const [mcooOverlay, setMcooOverlay] = useState<OverlayImageState | null>(null);
+  const [viewshedState, setViewshedState] = useState<ViewshedState | null>(
+    null,
+  );
+  const [mcooOverlay, setMcooOverlay] = useState<OverlayImageState | null>(
+    null,
+  );
   const [losState, setLosState] = useState<LosState | null>(null);
   const [losPendingPoint, setLosPendingPoint] = useState<GeoPoint | null>(null);
-  const [pointAnalysis, setPointAnalysis] = useState<PointAnalysisResult | null>(null);
+  const [pointAnalysis, setPointAnalysis] =
+    useState<PointAnalysisResult | null>(null);
   const [engineState, setEngineState] = useState<EngineState>({
     status: "idle",
     message: "Listo",
@@ -104,23 +110,69 @@ export function useTerrainConsole() {
     },
   });
 
-  const simulationDate = useMemo(() => createSimulationDate(selectedDate, timeMinutes), [selectedDate, timeMinutes]);
+  const simulationDate = useMemo(
+    () => createSimulationDate(selectedDate, timeMinutes),
+    [selectedDate, timeMinutes],
+  );
   const solarState: SolarState = useMemo(
-    () => buildSolarState(simulationDate, viewState.center.lat, viewState.center.lng, UTC_OFFSET),
+    () =>
+      buildSolarState(
+        simulationDate,
+        viewState.center.lat,
+        viewState.center.lng,
+        UTC_OFFSET,
+      ),
     [simulationDate, viewState.center.lat, viewState.center.lng],
   );
-  const weatherState: WeatherState = useMemo(() => getWeather(selectedDate, timeMinutes), [selectedDate, timeMinutes]);
+  const weatherState: WeatherState = useMemo(
+    () => getWeather(selectedDate, timeMinutes),
+    [selectedDate, timeMinutes],
+  );
   const moonState: MoonState = useMemo(
-    () => buildMoonState(simulationDate, viewState.center.lat, viewState.center.lng, solarState.altitude, UTC_OFFSET),
-    [simulationDate, viewState.center.lat, viewState.center.lng, solarState.altitude],
+    () =>
+      buildMoonState(
+        simulationDate,
+        viewState.center.lat,
+        viewState.center.lng,
+        solarState.altitude,
+        UTC_OFFSET,
+      ),
+    [
+      simulationDate,
+      viewState.center.lat,
+      viewState.center.lng,
+      solarState.altitude,
+    ],
   );
   const operationAssessments: OperationAssessment[] = useMemo(
-    () => evaluateOperations(weatherState, solarState.altitude, moonState.illuminationFraction, moonState.altitude),
-    [weatherState, solarState.altitude, moonState.illuminationFraction, moonState.altitude],
+    () =>
+      evaluateOperations(
+        weatherState,
+        solarState.altitude,
+        moonState.illuminationFraction,
+        moonState.altitude,
+      ),
+    [
+      weatherState,
+      solarState.altitude,
+      moonState.illuminationFraction,
+      moonState.altitude,
+    ],
   );
   const nightOpacity = useMemo(
-    () => getNightOpacity(solarState.altitude, moonState.altitude, moonState.illuminationFraction, weatherState.cloudCover),
-    [moonState.altitude, moonState.illuminationFraction, solarState.altitude, weatherState.cloudCover],
+    () =>
+      getNightOpacity(
+        solarState.altitude,
+        moonState.altitude,
+        moonState.illuminationFraction,
+        weatherState.cloudCover,
+      ),
+    [
+      moonState.altitude,
+      moonState.illuminationFraction,
+      solarState.altitude,
+      weatherState.cloudCover,
+    ],
   );
   const metrics = useMemo(
     () =>
@@ -157,101 +209,142 @@ export function useTerrainConsole() {
     };
   }, [isPlaying, speedMultiplier]);
 
-  useEffect(() => {
-    document.documentElement.style.setProperty("--nt-map-font-scale", fontScaleLarge ? "1.15" : "1");
-  }, [fontScaleLarge]);
-
   const updateEngineState = useCallback((next: EngineState) => {
     setEngineState(next);
   }, []);
 
-  const runViewshed = useCallback(async (point: GeoPoint, isLive: boolean) => {
-    const sequence = ++viewshedSequenceRef.current;
+  const runViewshed = useCallback(
+    async (point: GeoPoint, isLive: boolean) => {
+      const sequence = ++viewshedSequenceRef.current;
 
-    const result = await computeViewshed(
-      demRef.current,
-      point.lat,
-      point.lng,
-      viewshedRadiusKm,
+      const result = await computeViewshed(
+        demRef.current,
+        point.lat,
+        point.lng,
+        viewshedRadiusKm,
+        observerHeight,
+        viewshedOpacity,
+        isLive,
+        (progress) => {
+          updateEngineState({
+            status: progress.status,
+            message: progress.message,
+            progress: progress.progress,
+            loadedTileCount:
+              progress.loadedTileCount ?? engineState.loadedTileCount,
+          });
+        },
+      );
+
+      if (sequence !== viewshedSequenceRef.current) {
+        return;
+      }
+
+      setViewshedState(result);
+    },
+    [
+      engineState.loadedTileCount,
       observerHeight,
+      updateEngineState,
       viewshedOpacity,
-      isLive,
+      viewshedRadiusKm,
+    ],
+  );
+
+  const runMcoo = useCallback(async () => {
+    const overlay = await computeMcooOverlay(
+      demRef.current,
+      viewState.bounds,
+      mcooOpacity,
       (progress) => {
         updateEngineState({
           status: progress.status,
           message: progress.message,
           progress: progress.progress,
-          loadedTileCount: progress.loadedTileCount ?? engineState.loadedTileCount,
+          loadedTileCount:
+            progress.loadedTileCount ?? engineState.loadedTileCount,
         });
       },
     );
 
-    if (sequence !== viewshedSequenceRef.current) {
-      return;
-    }
-
-    setViewshedState(result);
-  }, [engineState.loadedTileCount, observerHeight, updateEngineState, viewshedOpacity, viewshedRadiusKm]);
-
-  const runMcoo = useCallback(async () => {
-    const overlay = await computeMcooOverlay(demRef.current, viewState.bounds, mcooOpacity, (progress) => {
-      updateEngineState({
-        status: progress.status,
-        message: progress.message,
-        progress: progress.progress,
-        loadedTileCount: progress.loadedTileCount ?? engineState.loadedTileCount,
-      });
-    });
-
     setMcooOverlay(overlay);
-  }, [engineState.loadedTileCount, mcooOpacity, updateEngineState, viewState.bounds]);
+  }, [
+    engineState.loadedTileCount,
+    mcooOpacity,
+    updateEngineState,
+    viewState.bounds,
+  ]);
 
-  const onMapClick = useCallback(async (point: GeoPoint) => {
-    if (activeTool === "viewshed") {
-      await runViewshed(point, viewshedLiveMode);
-      return;
-    }
-
-    if (activeTool === "los") {
-      if (!losPendingPoint) {
-        setLosPendingPoint(point);
+  const onMapClick = useCallback(
+    async (point: GeoPoint) => {
+      if (activeTool === "viewshed") {
+        await runViewshed(point, viewshedLiveMode);
         return;
       }
 
-      const result = await computeLos(demRef.current, losPendingPoint, point, (progress) => {
-        updateEngineState({
-          status: progress.status,
-          message: progress.message,
-          progress: progress.progress,
-          loadedTileCount: engineState.loadedTileCount,
-        });
-      });
-      setLosState(result);
-      setLosPendingPoint(null);
-      return;
-    }
+      if (activeTool === "los") {
+        if (!losPendingPoint) {
+          setLosPendingPoint(point);
+          return;
+        }
 
-    if (activeTool === "info") {
-      await demRef.current.ensureTiles(point.lng - 0.02, point.lng + 0.02, point.lat - 0.02, point.lat + 0.02, 10);
-      setPointAnalysis(analyzePoint(demRef.current, point));
-    }
-  }, [activeTool, engineState.loadedTileCount, losPendingPoint, runViewshed, updateEngineState, viewshedLiveMode]);
+        const result = await computeLos(
+          demRef.current,
+          losPendingPoint,
+          point,
+          (progress) => {
+            updateEngineState({
+              status: progress.status,
+              message: progress.message,
+              progress: progress.progress,
+              loadedTileCount: engineState.loadedTileCount,
+            });
+          },
+        );
+        setLosState(result);
+        setLosPendingPoint(null);
+        return;
+      }
 
-  const onMapMove = useCallback((point: GeoPoint) => {
-    setCursorPoint(point);
+      if (activeTool === "info") {
+        await demRef.current.ensureTiles(
+          point.lng - 0.02,
+          point.lng + 0.02,
+          point.lat - 0.02,
+          point.lat + 0.02,
+          10,
+        );
+        setPointAnalysis(analyzePoint(demRef.current, point));
+      }
+    },
+    [
+      activeTool,
+      engineState.loadedTileCount,
+      losPendingPoint,
+      runViewshed,
+      updateEngineState,
+      viewshedLiveMode,
+    ],
+  );
 
-    if (activeTool !== "viewshed" || !viewshedLiveMode) {
-      return;
-    }
+  const onMapMove = useCallback(
+    (point: GeoPoint) => {
+      setCursorPoint(point);
 
-    if (liveCursorTimeoutRef.current !== null) {
-      window.clearTimeout(liveCursorTimeoutRef.current);
-    }
+      if (activeTool !== "viewshed" || !viewshedLiveMode) {
+        return;
+      }
 
-    liveCursorTimeoutRef.current = window.setTimeout(() => {
-      void runViewshed(point, true);
-    }, 250);
-  }, [activeTool, runViewshed, viewshedLiveMode]);
+      if (liveCursorTimeoutRef.current !== null) {
+        window.clearTimeout(liveCursorTimeoutRef.current);
+      }
+
+      liveCursorTimeoutRef.current = window.setTimeout(() => {
+        void runViewshed(point, true);
+      }, 250);
+    },
+    [activeTool, runViewshed, viewshedLiveMode],
+  );
 
   useEffect(() => {
     if (!viewshedState) {
@@ -259,7 +352,13 @@ export function useTerrainConsole() {
     }
 
     void runViewshed(viewshedState.point, viewshedState.live);
-  }, [observerHeight, runViewshed, viewshedOpacity, viewshedRadiusKm, viewshedState]);
+  }, [
+    observerHeight,
+    runViewshed,
+    viewshedOpacity,
+    viewshedRadiusKm,
+    viewshedState,
+  ]);
 
   useEffect(() => {
     if (!mcooVisible) {
@@ -327,7 +426,6 @@ export function useTerrainConsole() {
     basemap,
     cursorPoint,
     engineState,
-    fontScaleLarge,
     isPlaying,
     losPendingPoint,
     losState,
@@ -356,7 +454,6 @@ export function useTerrainConsole() {
     setActiveTab,
     setActiveTool: selectTool,
     setBasemap,
-    setFontScaleLarge,
     setIsPlaying,
     setMcooOpacity,
     setObserverHeight,

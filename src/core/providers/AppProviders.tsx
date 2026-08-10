@@ -1,12 +1,14 @@
 import type { PropsWithChildren } from "react";
 import { AuthProvider } from "@/features/auth";
-import { LanguageProvider, ThemeProvider } from "@/shared/providers";
+import { LanguageProvider, ThemeProvider, TypographyProvider } from "@/shared/providers";
 
 export function AppProviders({ children }: PropsWithChildren) {
   return (
     <LanguageProvider>
       <ThemeProvider>
-        <AuthProvider>{children}</AuthProvider>
+        <TypographyProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </TypographyProvider>
       </ThemeProvider>
     </LanguageProvider>
   );
