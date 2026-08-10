@@ -133,6 +133,9 @@ describe("App", () => {
 
     expect(localStorage.getItem("nt.theme")).toBe("dark");
     expect(document.documentElement.style.colorScheme).toBe("dark");
+    expect(screen.getAllByAltText("neural terrena").map((logo) => logo.getAttribute("src"))).toContain(
+      "/brand/NT-logo-white-horizontal.png",
+    );
   });
 
   it("restores the authenticated session on load using refresh", async () => {

@@ -23,6 +23,7 @@ vi.mock("@/shared/providers", () => ({
     setLanguage: vi.fn(),
   }),
   useTheme: () => ({
+    resolvedTheme: "light",
     themePreference: "light",
     setThemePreference: vi.fn(),
   }),

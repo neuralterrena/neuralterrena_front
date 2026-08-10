@@ -25,7 +25,7 @@ export function ConsoleHome() {
   const { session } = useAuth();
   const logout = useLogout();
   const { language, setLanguage, t } = useLanguage();
-  const { setThemePreference, themePreference } = useTheme();
+  const { resolvedTheme, setThemePreference, themePreference } = useTheme();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
   const [openUtilityMenu, setOpenUtilityMenu] = useState<"language" | "theme" | "user" | null>(null);
@@ -131,8 +131,16 @@ export function ConsoleHome() {
         ref={sidebarRef}
       >
         <div className="console-sidebar__header">
-          <img alt="neural terrena" className="console-sidebar__logo" src="/brand/NT-logo-color-horizontal.png" />
-          <img alt="neural terrena" className="console-sidebar__isotype" src="/brand/NT-iso-color-on-white.png" />
+          <img
+            alt="neural terrena"
+            className="console-sidebar__logo"
+            src={resolvedTheme === "dark" ? "/brand/NT-logo-white-horizontal.png" : "/brand/NT-logo-color-horizontal.png"}
+          />
+          <img
+            alt="neural terrena"
+            className="console-sidebar__isotype"
+            src={resolvedTheme === "dark" ? "/brand/NT-iso-color-on-white.png" : "/brand/NT-iso-color.png"}
+          />
           <button
             aria-label={isSidebarCollapsed ? t("console.navigationExpand") : t("console.navigationCollapse")}
             className="console-sidebar__collapse-button"

@@ -69,13 +69,16 @@ a {
 .login-screen {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(384px, 480px);
+  height: 100dvh;
   min-height: 100dvh;
 }
 
 .login-visual {
   display: grid;
-  grid-template-rows: auto minmax(260px, 1fr) auto auto;
-  min-height: 100dvh;
+  gap: var(--nt-space-4);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
   padding: var(--nt-space-6);
   position: relative;
@@ -1018,9 +1021,11 @@ a {
 @media (max-width: 1040px) {
   .login-screen {
     grid-template-columns: 1fr;
+    height: auto;
   }
 
   .login-visual {
+    height: auto;
     min-height: auto;
   }
 

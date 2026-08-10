@@ -3,7 +3,7 @@ import { type FormEvent, useId, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AuthError } from "../model/authTypes";
 import { useAuth } from "../model/useAuth";
-import { useLanguage } from "@/shared/providers";
+import { useLanguage, useTheme } from "@/shared/providers";
 import { AuthLayout } from "./AuthLayout";
 
 const getRedirectPath = (state: unknown) => {
@@ -30,6 +30,7 @@ export function LoginPage() {
   const passwordId = useId();
   const { isAuthenticating, login } = useAuth();
   const { t } = useLanguage();
+  const { resolvedTheme } = useTheme();
   const [email, setEmail] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [password, setPassword] = useState("");
@@ -64,7 +65,12 @@ export function LoginPage() {
     >
       <form className="auth-card" onSubmit={(event) => void handleSubmit(event)}>
         <div className="auth-card__brand">
-          <img alt="neural terrena" height="46" src="/brand/NT-logo-color-horizontal.png" width="266" />
+          <img
+            alt="neural terrena"
+            height="46"
+            src={resolvedTheme === "dark" ? "/brand/NT-logo-white-horizontal.png" : "/brand/NT-logo-color-horizontal.png"}
+            width="266"
+          />
         </div>
 
         <div className="auth-card__heading">
