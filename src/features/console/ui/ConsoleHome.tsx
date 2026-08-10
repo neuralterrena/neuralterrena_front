@@ -134,7 +134,7 @@ export function ConsoleHome() {
           <img
             alt="neural terrena"
             className="console-sidebar__logo"
-            src={resolvedTheme === "dark" ? "/brand/NT-logo-white-horizontal.png" : "/brand/NT-logo-color-horizontal.png"}
+            src="/brand/NT-logo-color-horizontal.png"
           />
           <img
             alt="neural terrena"

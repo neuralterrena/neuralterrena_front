@@ -1,5 +1,4 @@
 import type { PropsWithChildren, ReactNode } from "react";
-import { useTheme } from "@/shared/providers";
 import { LanguageSwitcher, ThemeSwitcher } from "@/shared/ui";
 
 interface AuthLayoutProps extends PropsWithChildren {
@@ -8,8 +7,6 @@ interface AuthLayoutProps extends PropsWithChildren {
 }
 
 export function AuthLayout({ aside, children, title }: AuthLayoutProps) {
-  const { resolvedTheme } = useTheme();
-
   return (
     <main className="login-screen">
       <section aria-label="Operational context" className="login-visual">
@@ -18,7 +15,7 @@ export function AuthLayout({ aside, children, title }: AuthLayoutProps) {
             alt="neural terrena"
             className="login-visual__logo"
             height="62"
-            src={resolvedTheme === "dark" ? "/brand/NT-logo-white-horizontal.png" : "/brand/NT-logo-color-horizontal.png"}
+            src="/brand/NT-logo-white-horizontal.png"
             width="360"
           />
           <div className="toolbar-switchers">

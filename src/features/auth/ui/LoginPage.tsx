@@ -68,7 +68,7 @@ export function LoginPage() {
           <img
             alt="neural terrena"
             height="46"
-            src={resolvedTheme === "dark" ? "/brand/NT-logo-white-horizontal.png" : "/brand/NT-logo-color-horizontal.png"}
+            src="/brand/NT-logo-white-horizontal.png"
             width="266"
           />
         </div>
@@ -141,12 +141,6 @@ export function LoginPage() {
           <Link to="/forgot-password">{t("auth.forgotPassword")}</Link>
         </div>
 
-        <div className="auth-card__meta" aria-label={t("auth.sessionStatus")}>
-          <span>
-            <Server aria-hidden="true" size={16} strokeWidth={1.75} />
-            {t("auth.apiReady")}
-          </span>
-        </div>
       </form>
     </AuthLayout>
   );

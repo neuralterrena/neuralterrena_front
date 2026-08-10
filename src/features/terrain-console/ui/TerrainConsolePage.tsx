@@ -118,7 +118,7 @@ export function TerrainConsolePage() {
           <img
             alt="neural terrena"
             className="console-sidebar__logo"
-            src={resolvedTheme === "dark" ? "/brand/NT-logo-white-horizontal.png" : "/brand/NT-logo-color-horizontal.png"}
+            src="/brand/NT-logo-white-horizontal.png"
           />
           <img
             alt="neural terrena"
