@@ -61,7 +61,6 @@ La pantalla inicial es el login. En modo local acepta:
 El servicio de autenticación ya está preparado para JWT por API:
 
 ```bash
-VITE_AUTH_MODE=server
 VITE_API_BASE_URL=https://api.example.com
 VITE_AUTH_LOGIN_PATH=/auth/login
 VITE_AUTH_REFRESH_PATH=/auth/refresh
