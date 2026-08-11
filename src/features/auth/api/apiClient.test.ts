@@ -41,7 +41,7 @@ describe("apiClient", () => {
     const session = await authService.login({ email: "operator@neuralterrena.com", password: "secret" });
     const fetchSpy = vi.spyOn(globalThis, "fetch");
 
-    await apiClient.get("http://localhost:8080/api/terrain");
+    await apiClient.get("http://localhost:8080/api/protected-resource");
 
     const [, init] = fetchSpy.mock.calls.at(-1) ?? [];
     const headers = new Headers(init?.headers);
@@ -59,7 +59,7 @@ describe("apiClient", () => {
     const session = await authService.login({ email: "operator@neuralterrena.com", password: "secret" });
     const fetchSpy = vi.spyOn(globalThis, "fetch");
 
-    await apiClient.get("http://localhost:8080/api/terrain");
+    await apiClient.get("http://localhost:8080/api/protected-resource");
 
     const initialHeaders = new Headers(fetchSpy.mock.calls[1]?.[1]?.headers);
     const retriedHeaders = new Headers(fetchSpy.mock.calls[3]?.[1]?.headers);
@@ -80,7 +80,7 @@ describe("apiClient", () => {
 
     await authService.login({ email: "operator@neuralterrena.com", password: "secret" });
 
-    await expect(apiClient.get("http://localhost:8080/api/terrain")).rejects.toMatchObject({
+    await expect(apiClient.get("http://localhost:8080/api/protected-resource")).rejects.toMatchObject({
       code: "auth.sessionExpired",
     });
 

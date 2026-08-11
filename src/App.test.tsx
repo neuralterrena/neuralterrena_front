@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "@/App";
 import { authService } from "@/features/auth/model/authService";
 
-vi.mock("@/features/terrain-console", () => ({
-  TerrainConsolePage: () => <h1>Superficie operativa</h1>,
+vi.mock("@/features/map", () => ({
+  MapPage: () => <h1>Visor operativo</h1>,
 }));
 
 const createAccessToken = (
@@ -80,10 +80,10 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: "Superficie operativa" }),
+        screen.getByRole("heading", { name: "Visor operativo" }),
       ).toBeInTheDocument();
     });
-    expect(screen.getByRole("link", { name: "Terreno" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Mapa" })).toHaveAttribute(
       "href",
       "/",
     );
@@ -174,7 +174,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: "Superficie operativa" }),
+        screen.getByRole("heading", { name: "Visor operativo" }),
       ).toBeInTheDocument();
     });
   });
@@ -257,7 +257,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: "Superficie operativa" }),
+        screen.getByRole("heading", { name: "Visor operativo" }),
       ).toBeInTheDocument();
     });
 

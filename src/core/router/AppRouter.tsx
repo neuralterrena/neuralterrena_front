@@ -7,7 +7,7 @@ import {
   ResetPasswordConfirmPage,
   useAuth,
 } from "@/features/auth";
-import { TerrainConsolePage } from "@/features/terrain-console";
+import { MapPage } from "@/features/map";
 import { AuthenticatedAppLayout } from "@/core/ui/AuthenticatedAppLayout";
 import { registerUnauthorizedHandler } from "@/features/auth/model/authNavigation";
 
@@ -51,7 +51,7 @@ export function AppRouter() {
           }
           path="/"
         >
-          <Route index element={<TerrainConsolePage />} />
+          <Route index element={<MapPage />} />
         </Route>
         <Route element={<Navigate replace to="/" />} path="*" />
       </Routes>

@@ -146,7 +146,7 @@ export function AuthenticatedAppLayout() {
         <nav className="console-nav">
           <NavLink end to="/">
             <Layers3 aria-hidden="true" size={18} strokeWidth={1.75} />
-            <span className="console-nav__label">{t("console.terrain")}</span>
+            <span className="console-nav__label">{t("console.map")}</span>
           </NavLink>
         </nav>
 

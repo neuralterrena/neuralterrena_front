@@ -24,14 +24,14 @@ export function AuthLayout({ aside, children, title }: AuthLayoutProps) {
           </div>
         </div>
 
-        <div aria-hidden="true" className="terrain-panel">
-          <div className="terrain-panel__grid" />
-          <div className="terrain-panel__line terrain-panel__line--one" />
-          <div className="terrain-panel__line terrain-panel__line--two" />
-          <div className="terrain-panel__node terrain-panel__node--one" />
-          <div className="terrain-panel__node terrain-panel__node--two" />
-          <div className="terrain-panel__node terrain-panel__node--three" />
-          <div className="terrain-panel__bands">
+        <div aria-hidden="true" className="auth-visual-panel">
+          <div className="auth-visual-panel__grid" />
+          <div className="auth-visual-panel__line auth-visual-panel__line--one" />
+          <div className="auth-visual-panel__line auth-visual-panel__line--two" />
+          <div className="auth-visual-panel__node auth-visual-panel__node--one" />
+          <div className="auth-visual-panel__node auth-visual-panel__node--two" />
+          <div className="auth-visual-panel__node auth-visual-panel__node--three" />
+          <div className="auth-visual-panel__bands">
             <span />
             <span />
             <span />

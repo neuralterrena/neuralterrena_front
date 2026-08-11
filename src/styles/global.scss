@@ -185,7 +185,7 @@ a {
   font-weight: 650;
 }
 
-.terrain-panel {
+.auth-visual-panel {
   align-self: stretch;
   border: 1px solid rgba(218, 218, 218, 0.2);
   border-radius: var(--nt-radius-md);
@@ -1043,7 +1043,7 @@ a {
     overflow: visible;
   }
 
-  .terrain-panel {
+  .auth-visual-panel {
     min-height: 0;
     width: 100%;
   }
@@ -1612,6 +1612,94 @@ a {
       border-color: var(--nt-color-blue);
       color: var(--nt-color-blue);
     }
+  }
+}
+
+.map-page {
+  background: var(--nt-bg-subtle);
+  min-height: 100dvh;
+  position: relative;
+}
+
+.map-viewport {
+  height: 100dvh;
+  width: 100%;
+}
+
+.map-projection-control,
+.map-error-state,
+.map-configuration-state {
+  background: color-mix(in srgb, var(--nt-surface) 96%, transparent);
+  border: 1px solid var(--nt-border);
+  border-radius: var(--nt-radius-md);
+  box-shadow: 0 12px 28px rgba(12, 24, 40, 0.14);
+}
+
+.map-projection-control {
+  display: flex;
+  gap: 4px;
+  left: calc(var(--nt-space-3) * 2);
+  padding: 4px;
+  position: absolute;
+  top: calc(var(--nt-space-3) * 2);
+  z-index: 2;
+
+  button {
+    align-items: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: calc(var(--nt-radius-md) - 2px);
+    color: var(--nt-fg-muted);
+    display: inline-flex;
+    font-size: var(--nt-text-sm);
+    font-weight: 700;
+    gap: 6px;
+    min-height: 36px;
+    padding: 0 10px;
+
+    &[aria-pressed="true"] {
+      background: var(--nt-color-blue);
+      color: var(--nt-color-white);
+    }
+  }
+}
+
+.map-error-state {
+  bottom: calc(var(--nt-space-3) * 2);
+  color: var(--nt-fg);
+  display: grid;
+  gap: 4px;
+  left: calc(var(--nt-space-3) * 2);
+  max-width: min(480px, calc(100% - 32px));
+  padding: var(--nt-space-2);
+  position: absolute;
+  z-index: 2;
+
+  span {
+    color: var(--nt-fg-muted);
+    font-size: var(--nt-text-sm);
+  }
+}
+
+.map-configuration-state {
+  display: grid;
+  gap: var(--nt-space-1);
+  left: 50%;
+  max-width: 460px;
+  padding: var(--nt-space-3);
+  position: absolute;
+  text-align: center;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% - 32px);
+
+  h1,
+  p {
+    margin: 0;
+  }
+
+  p {
+    color: var(--nt-fg-muted);
   }
 }
 
