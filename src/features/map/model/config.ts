@@ -6,6 +6,7 @@ export interface MapView {
 }
 
 export interface MapConfiguration {
+  forecastHubApiBaseUrl: string;
   initialView: MapView;
   styleUrl: string;
 }
@@ -49,11 +50,13 @@ export function readMapConfiguration(
   env: Pick<
     ImportMetaEnv,
     "VITE_MAP_INITIAL_CENTER" | "VITE_MAP_INITIAL_ZOOM" | "VITE_MAP_STYLE_URL"
+    | "VITE_FORECAST_HUB_API_BASE_URL"
   > = import.meta.env,
 ): MapConfiguration {
   const styleUrl = env.VITE_MAP_STYLE_URL?.trim() || DEFAULT_MAP_STYLE_URL;
 
   return {
+    forecastHubApiBaseUrl: env.VITE_FORECAST_HUB_API_BASE_URL?.trim().replace(/\/$/, "") || "",
     initialView: {
       center: parseCenter(env.VITE_MAP_INITIAL_CENTER),
       zoom: parseZoom(env.VITE_MAP_INITIAL_ZOOM),

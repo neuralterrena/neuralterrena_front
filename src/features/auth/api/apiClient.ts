@@ -3,6 +3,7 @@ import { AuthError } from "../model/authTypes";
 import { notifyUnauthorized } from "../model/authNavigation";
 
 interface RequestOptions extends RequestInit {
+  authBaseUrl?: string;
   skipAuth?: boolean;
   skipAuthRetry?: boolean;
 }
@@ -15,6 +16,14 @@ const isBackendUrl = (url: URL) => {
   }
 
   return url.toString().startsWith(new URL(apiBaseUrl).toString());
+};
+
+const isUrlWithinBase = (url: URL, baseUrl?: string) => {
+  if (!baseUrl) {
+    return false;
+  }
+
+  return url.toString().startsWith(new URL(baseUrl).toString());
 };
 
 const resolveUrl = (input: RequestInfo | URL) => {
@@ -32,10 +41,10 @@ const resolveUrl = (input: RequestInfo | URL) => {
 const createHeaders = (headers?: HeadersInit) => new Headers(headers);
 
 async function request(input: RequestInfo | URL, options: RequestOptions = {}) {
-  const { skipAuth = false, skipAuthRetry = false, ...init } = options;
+  const { authBaseUrl, skipAuth = false, skipAuthRetry = false, ...init } = options;
   const url = resolveUrl(input);
   const headers = createHeaders(init.headers);
-  const shouldAttachAuth = !skipAuth && isBackendUrl(url);
+  const shouldAttachAuth = !skipAuth && (isBackendUrl(url) || isUrlWithinBase(url, authBaseUrl));
 
   if (shouldAttachAuth) {
     const accessToken = authService.getAccessToken();
