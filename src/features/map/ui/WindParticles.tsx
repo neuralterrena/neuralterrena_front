@@ -1,17 +1,13 @@
 import { useEffect, useRef } from "react";
 import type { Map } from "maplibre-gl";
 import type { WindField } from "../api/forecastMapApi";
+import { arrowLengthForZoom } from "../model/windVisualization";
 
 interface Particle { latitude: number; longitude: number; age: number; }
 interface Props { field: WindField | null; map: Map | null; mode: "particles" | "arrows"; }
 
 const PARTICLE_COUNT = 360;
 const PARTICLE_STEP = 0.0025;
-const VECTOR_LENGTH_PX = 15;
-
-export function arrowLengthForZoom(zoom: number, referenceZoom: number) {
-  return Math.max(8, Math.min(72, VECTOR_LENGTH_PX * 2 ** (zoom - referenceZoom)));
-}
 
 function drawArrow(context: CanvasRenderingContext2D, startX: number, startY: number, endX: number, endY: number) {
   const angle = Math.atan2(endY - startY, endX - startX);
