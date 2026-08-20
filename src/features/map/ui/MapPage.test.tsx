@@ -1,13 +1,15 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { LanguageProvider } from "@/shared/providers/LanguageProvider";
+import { LanguageSwitcher } from "@/shared/ui/LanguageSwitcher";
 
-const viewport = vi.fn(({ rasterUrl }: { rasterUrl: string | null }) => <div data-raster-url={rasterUrl ?? ""} data-testid="map-viewport" />);
+const viewport = vi.fn(({ forecastPanelAriaLabel, forecastPanelOpen, onForecastPanelToggle, rasterUrl }: { forecastPanelAriaLabel: string; forecastPanelOpen: boolean; onForecastPanelToggle: () => void; rasterUrl: string | null }) => <div data-raster-url={rasterUrl ?? ""} data-testid="map-viewport"><button aria-expanded={forecastPanelOpen} aria-label={forecastPanelAriaLabel} onClick={onForecastPanelToggle} type="button" /></div>);
 vi.mock("./MapLibreViewport", () => ({ MapLibreViewport: viewport }));
 
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); viewport.mockClear(); });
 
 describe("MapPage model and timeline", () => {
-  it("switches model, updates the timeline and preserves the mounted map viewport", async () => {
+  it("toggles the forecast panel while preserving its selection and the mounted map viewport", async () => {
     vi.stubEnv("VITE_FORECAST_HUB_API_BASE_URL", "https://forecast.example.test");
     vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = input instanceof Request ? input.url : new URL(input).toString();
@@ -17,15 +19,27 @@ describe("MapPage model and timeline", () => {
       return Promise.resolve(new Response("", { status: 404 }));
     });
     const { MapPage } = await import("./MapPage");
-    render(<MapPage />);
-    await screen.findByRole("button", { name: "Temperatura a 2 m" });
-    const slider = screen.getByLabelText("Hora de predicción");
+    render(<LanguageProvider><LanguageSwitcher /><MapPage /></LanguageProvider>);
+    const panelToggle = await screen.findByRole("button", { name: /Abrir controles de predicción/ });
+    expect(panelToggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("region", { name: "Predicción meteorológica" })).not.toBeInTheDocument();
+    fireEvent.click(panelToggle);
+    await waitFor(() => expect(screen.getByLabelText("Capa meteorológica")).toHaveValue("temperature_2m"));
+    const slider = screen.getByLabelText("Plazo");
     fireEvent.change(slider, { target: { value: "1" } });
     await waitFor(() => expect(screen.getByText("+3 h")).toBeInTheDocument());
     const mapViewport = screen.getByTestId("map-viewport");
-    fireEvent.change(screen.getByLabelText("Modelo meteorológico"), { target: { value: "icon-eu" } });
+    fireEvent.change(screen.getByLabelText("Modelo"), { target: { value: "icon-eu" } });
     await waitFor(() => expect(screen.getByText("Datos: DWD ICON-EU")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar controles de predicción" }));
+    expect(screen.queryByLabelText("Modelo")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Abrir controles de predicción/ })).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(screen.getByRole("button", { name: /Abrir controles de predicción/ }));
+    expect(screen.getByLabelText("Modelo")).toHaveValue("icon-eu");
     expect(screen.getByTestId("map-viewport")).toBe(mapViewport);
     expect(screen.getByTestId("map-viewport")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Inglés" }));
+    expect(within(mapViewport).getByRole("button", { name: /Close forecast controls/ })).toBeInTheDocument();
+    expect(screen.getByLabelText("Model")).toHaveValue("icon-eu");
   });
 });

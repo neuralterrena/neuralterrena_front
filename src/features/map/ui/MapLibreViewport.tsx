@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   type ErrorEvent,
+  type IControl,
   Map,
   NavigationControl,
   setWorkerUrl,
@@ -13,6 +14,7 @@ import type { WindField } from "../api/forecastMapApi";
 import { WindParticles } from "./WindParticles";
 import { authService } from "../../auth/model/authService";
 import { apiClient } from "../../auth/api/apiClient";
+import { useLanguage } from "@/shared/providers";
 
 const FORECAST_SOURCE_ID_PREFIX = "forecast-raster-";
 const FORECAST_LAYER_ID_PREFIX = "forecast-raster-layer-";
@@ -89,9 +91,62 @@ function addOrographyLayer(map: Map) {
   });
 }
 
+interface ForecastPanelControlState {
+  ariaLabel: string;
+  isOpen: boolean;
+  label: string;
+  onToggle: () => void;
+}
+
+class ForecastPanelControl implements IControl {
+  private button: HTMLButtonElement | null = null;
+  private container: HTMLDivElement | null = null;
+  private label: HTMLSpanElement | null = null;
+
+  constructor(private state: ForecastPanelControlState) {}
+
+  onAdd(): HTMLElement {
+    const container = document.createElement("div");
+    container.className = "maplibregl-ctrl maplibregl-ctrl-group forecast-map-control";
+    const button = document.createElement("button");
+    button.className = "forecast-map-control__button";
+    button.type = "button";
+    button.innerHTML = "<svg aria-hidden=\"true\" fill=\"none\" viewBox=\"0 0 24 24\"><path d=\"m12 3-8 4 8 4 8-4-8-4Zm-8 9 8 4 8-4M4 17l8 4 8-4\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.75\" /></svg>";
+    button.addEventListener("click", () => this.state.onToggle());
+    const label = document.createElement("span");
+    label.className = "forecast-map-control__label";
+    label.setAttribute("aria-hidden", "true");
+    container.append(label, button);
+    this.button = button;
+    this.container = container;
+    this.label = label;
+    this.update(this.state);
+    return container;
+  }
+
+  onRemove(): void {
+    this.container?.remove();
+    this.button = null;
+    this.container = null;
+    this.label = null;
+  }
+
+  update(state: ForecastPanelControlState) {
+    this.state = state;
+    this.button?.setAttribute("aria-expanded", String(state.isOpen));
+    this.button?.setAttribute("aria-label", state.ariaLabel);
+    this.button?.setAttribute("title", state.ariaLabel);
+    if (this.label) this.label.textContent = state.label;
+  }
+}
+
 interface MapLibreViewportProps {
   configuration: MapConfiguration;
+  forecastPanelAriaLabel: string;
+  forecastPanelLabel: string;
+  forecastPanelOpen: boolean;
   flat: boolean;
+  onForecastPanelToggle: () => void;
   projection: MapProjection;
   onError: (message: string) => void;
   rasterUrl: string | null;
@@ -102,7 +157,11 @@ interface MapLibreViewportProps {
 
 export function MapLibreViewport({
   configuration,
+  forecastPanelAriaLabel,
+  forecastPanelLabel,
+  forecastPanelOpen,
   flat,
+  onForecastPanelToggle,
   projection,
   onError,
   rasterUrl,
@@ -110,17 +169,41 @@ export function MapLibreViewport({
   windField,
   windMode,
 }: MapLibreViewportProps) {
+  const { t } = useLanguage();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
   const onErrorRef = useRef(onError);
+  const translateRef = useRef(t);
   const prefetchedTileUrlsRef = useRef(new Set<string>());
   const activeRasterSlotRef = useRef<number | null>(null);
   const rasterRemovalTimersRef = useRef(new globalThis.Map<number, number>());
+  const forecastPanelControlRef = useRef<ForecastPanelControl | null>(null);
+  const forecastPanelStateRef = useRef<ForecastPanelControlState>({
+    ariaLabel: forecastPanelAriaLabel,
+    isOpen: forecastPanelOpen,
+    label: forecastPanelLabel,
+    onToggle: onForecastPanelToggle,
+  });
   const [mapInstance, setMapInstance] = useState<Map | null>(null);
 
   useEffect(() => {
     onErrorRef.current = onError;
   }, [onError]);
+
+  useEffect(() => {
+    translateRef.current = t;
+  }, [t]);
+
+  useEffect(() => {
+    const state = {
+      ariaLabel: forecastPanelAriaLabel,
+      isOpen: forecastPanelOpen,
+      label: forecastPanelLabel,
+      onToggle: onForecastPanelToggle,
+    };
+    forecastPanelStateRef.current = state;
+    forecastPanelControlRef.current?.update(state);
+  }, [forecastPanelAriaLabel, forecastPanelLabel, forecastPanelOpen, onForecastPanelToggle]);
 
   useEffect(() => () => {
     rasterRemovalTimersRef.current.forEach((timer) => window.clearTimeout(timer));
@@ -149,9 +232,12 @@ export function MapLibreViewport({
     });
     const navigation = new NavigationControl({ showCompass: true, showZoom: true });
     map.addControl(navigation, "top-right");
+    const forecastPanelControl = new ForecastPanelControl(forecastPanelStateRef.current);
+    map.addControl(forecastPanelControl, "top-right");
+    forecastPanelControlRef.current = forecastPanelControl;
     map.once("load", () => addOrographyLayer(map));
     map.on("error", (event: ErrorEvent) => {
-      const message = event.error?.message || "No se pudo cargar el estilo del mapa.";
+      const message = event.error?.message || translateRef.current("map.styleLoadError");
       onErrorRef.current(message);
     });
     mapRef.current = map;
@@ -160,6 +246,7 @@ export function MapLibreViewport({
     return () => {
       map.remove();
       mapRef.current = null;
+      forecastPanelControlRef.current = null;
       setMapInstance(null);
     };
   }, [configuration.forecastHubApiBaseUrl, configuration.initialView.center, configuration.initialView.zoom, configuration.styleUrl]);
@@ -293,5 +380,5 @@ export function MapLibreViewport({
     };
   }, [mapInstance, rasterUrl]);
 
-  return <div aria-label="Mapa interactivo" className="map-viewport" ref={containerRef} role="application">{windField ? <WindParticles field={windField} map={mapInstance} mode={windMode} /> : null}</div>;
+  return <div aria-label={t("map.interactiveMap")} className="map-viewport" ref={containerRef} role="application">{windField ? <WindParticles field={windField} map={mapInstance} mode={windMode} /> : null}</div>;
 }

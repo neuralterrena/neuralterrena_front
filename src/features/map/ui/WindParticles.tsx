@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import type { Map } from "maplibre-gl";
 import type { WindField } from "../api/forecastMapApi";
 import { arrowLengthForZoom } from "../model/windVisualization";
+import { useLanguage } from "@/shared/providers";
 
 interface Particle { latitude: number; longitude: number; age: number; }
 interface Props { field: WindField | null; map: Map | null; mode: "particles" | "arrows"; }
@@ -22,6 +23,7 @@ function drawArrow(context: CanvasRenderingContext2D, startX: number, startY: nu
 }
 
 export function WindParticles({ field, map, mode }: Props) {
+  const { t } = useLanguage();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -99,5 +101,5 @@ export function WindParticles({ field, map, mode }: Props) {
     };
   }, [field, map, mode]);
 
-  return <canvas aria-label="Vectores de viento animados" className="wind-particles" ref={canvasRef} role="img" />;
+  return <canvas aria-label={t("map.vectorWind")} className="wind-particles" ref={canvasRef} role="img" />;
 }
