@@ -10,6 +10,7 @@ describe("readMapConfiguration", () => {
         VITE_MAP_STYLE_URL: "https://maps.example.test/style.json",
       }),
     ).toEqual({
+      forecastHubApiBaseUrl: "",
       initialView: { center: [-3.7, 40.4], zoom: 7 },
       styleUrl: "https://maps.example.test/style.json",
     });
@@ -23,6 +24,7 @@ describe("readMapConfiguration", () => {
         VITE_MAP_STYLE_URL: "   ",
       }),
     ).toEqual({
+      forecastHubApiBaseUrl: "",
       initialView: { center: [-4.85, 43.17], zoom: 10 },
       styleUrl: "https://tiles.openfreemap.org/styles/liberty",
     });

@@ -64,13 +64,14 @@ El servicio de autenticación ya está preparado para JWT por API:
 VITE_API_BASE_URL=https://api.example.com
 VITE_AUTH_LOGIN_PATH=/auth/login
 VITE_AUTH_REFRESH_PATH=/auth/refresh
+VITE_FORECAST_HUB_API_BASE_URL=https://forecast.example.com
 ```
 
 La gestión de tokens funciona así:
 
 - `accessToken`: solo en memoria.
 - `refreshToken`: persistido para restaurar sesión al recargar.
-- Cliente HTTP común con `Authorization: Bearer ...` automático para llamadas al backend.
+- Cliente HTTP común con `Authorization: Bearer ...` automático para llamadas al backend y al Forecast Hub configurado.
 - Si una respuesta devuelve `401`, se intenta `POST` al endpoint de refresh y se reintenta la llamada original una vez.
 
 El backend esperado debe responder a `POST /auth/login` y `POST /auth/refresh` con `accessToken` y, cuando proceda, `refreshToken`, `expiresIn`, `expiresAt` y `user`.
