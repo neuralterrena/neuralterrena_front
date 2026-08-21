@@ -18,6 +18,12 @@ describe("buildRasterTileUrl", () => {
     expect(url).toContain("rescale=250%2C310");
     expect(url).not.toContain("token");
   });
+
+  it("preserves a deployment path prefix", () => {
+    const url = buildRasterTileUrl("https://forecast.example.test/forecast-hub", "gfs", "2026081500", "temperature_2m", 0, { min: 250, max: 310 }, "viridis");
+
+    expect(url).toContain("/forecast-hub/v1/models/gfs/");
+  });
 });
 
 describe("forecast model API", () => {
@@ -35,6 +41,8 @@ describe("forecast model API", () => {
       { id: "gfs" },
       { id: "icon-eu", label: "ICON Europa" },
     ]);
+    const [, modelsInit] = fetchSpy.mock.calls.at(-1) ?? [];
+    expect(new Headers(modelsInit?.headers).get("Authorization")).toBe(`Bearer ${accessToken}`);
     const runs = await getRuns("https://forecast.example.test", "gfs");
     const [, init] = fetchSpy.mock.calls.at(-1) ?? [];
     expect(new Headers(init?.headers).get("Authorization")).toBe(`Bearer ${accessToken}`);

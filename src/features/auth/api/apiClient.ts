@@ -23,7 +23,15 @@ const isUrlWithinBase = (url: URL, baseUrl?: string) => {
     return false;
   }
 
-  return url.toString().startsWith(new URL(baseUrl).toString());
+  const base = new URL(baseUrl, globalThis.location?.origin ?? "http://localhost");
+
+  if (url.origin !== base.origin) {
+    return false;
+  }
+
+  const basePath = base.pathname.replace(/\/+$/, "") || "/";
+
+  return basePath === "/" || url.pathname === basePath || url.pathname.startsWith(`${basePath}/`);
 };
 
 const resolveUrl = (input: RequestInfo | URL) => {

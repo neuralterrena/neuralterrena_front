@@ -90,28 +90,28 @@ function normalizeModels(payload: { models?: unknown } | unknown[]): ForecastMod
 }
 
 export async function getModels(baseUrl: string, signal?: AbortSignal) {
-  const payload = await json<{ models?: unknown } | unknown[]>(endpoint(baseUrl, "/v1/models"), baseUrl, signal);
+  const payload = await json<{ models?: unknown } | unknown[]>(endpoint(baseUrl, "v1/models"), baseUrl, signal);
   return normalizeModels(payload).sort((a, b) => a.id.localeCompare(b.id));
 }
 
 export async function getRuns(baseUrl: string, model: ForecastModelId, signal?: AbortSignal) {
-  const result = await json<{ runs: Record<string, Omit<RunInfo, "forecast_layers"> & { forecast_layers?: Record<string, string[]> }> }>(endpoint(baseUrl, `/v1/models/${modelPath(model)}/runs`), baseUrl, signal);
+  const result = await json<{ runs: Record<string, Omit<RunInfo, "forecast_layers"> & { forecast_layers?: Record<string, string[]> }> }>(endpoint(baseUrl, `v1/models/${modelPath(model)}/runs`), baseUrl, signal);
   return Object.entries(result.runs)
     .map(([run, info]) => [run, normalizeRunInfo(info)] as [string, RunInfo])
     .sort(([a], [b]) => b.localeCompare(a));
 }
 
 export async function getRunMetadata(baseUrl: string, model: ForecastModelId, run: string, signal?: AbortSignal) {
-  const metadata = await json<Omit<ZarrMetadata, "forecast_layers"> & { forecast_layers?: Record<string, string[]> }>(endpoint(baseUrl, `/v1/models/${modelPath(model)}/zarr/${encodeURIComponent(run)}`), baseUrl, signal);
+  const metadata = await json<Omit<ZarrMetadata, "forecast_layers"> & { forecast_layers?: Record<string, string[]> }>(endpoint(baseUrl, `v1/models/${modelPath(model)}/zarr/${encodeURIComponent(run)}`), baseUrl, signal);
   return normalizeRunInfo(metadata) as ZarrMetadata;
 }
 
 export async function getWindField(baseUrl: string, model: ForecastModelId, run: string, hour: number, signal?: AbortSignal) {
-  return json<WindField>(endpoint(baseUrl, `/v1/models/${modelPath(model)}/map-wind/${encodeURIComponent(run)}/${hour}.json`), baseUrl, signal);
+  return json<WindField>(endpoint(baseUrl, `v1/models/${modelPath(model)}/map-wind/${encodeURIComponent(run)}/${hour}.json`), baseUrl, signal);
 }
 
 export function buildRasterTileUrl(baseUrl: string, model: ForecastModelId, run: string, variable: ForecastLayer, hour: number, range: RasterRange, palette: string) {
-  const url = new URL(`/v1/models/${modelPath(model)}/zarr/tiles/WebMercatorQuad/{z}/{x}/{y}.png`, `${baseUrl}/`);
+  const url = new URL(`v1/models/${modelPath(model)}/zarr/tiles/WebMercatorQuad/{z}/{x}/{y}.png`, `${baseUrl}/`);
   url.searchParams.set("run", run);
   url.searchParams.set("variable", variable);
   url.searchParams.set("sel", `forecast_hour=${hour}`);

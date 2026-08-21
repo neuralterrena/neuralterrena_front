@@ -66,6 +66,22 @@ describe("apiClient", () => {
     expect(headers.get("X-API-Key")).toBeNull();
   });
 
+  it("adds the access token to an authorized service published under a path prefix", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({ access: createAccessToken("usr_1") }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+
+    const session = await authService.login({ email: "operator@neuralterrena.com", password: "secret" });
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await apiClient.get("https://forecast.example.test/forecast-hub/v1/models", {
+      authBaseUrl: "https://forecast.example.test/forecast-hub",
+    });
+
+    const [, init] = fetchSpy.mock.calls.at(-1) ?? [];
+    expect(new Headers(init?.headers).get("Authorization")).toBe(`Bearer ${session.accessToken}`);
+  });
+
   it("refreshes the access token and retries once after a 401", async () => {
     vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify({ access: createAccessToken("usr_login") }), { status: 200 }))
