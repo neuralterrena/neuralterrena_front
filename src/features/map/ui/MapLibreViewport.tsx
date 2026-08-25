@@ -199,12 +199,11 @@ export function MapLibreViewport({
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || map.getStyle()?.name === undefined) {
-      return undefined;
-    }
 
-    // The first style is set in the constructor; only react to later changes.
-    if (appliedStyleUrlRef.current === basemapStyleUrl) {
+    // The first style is set in the constructor, so only later changes reach
+    // setStyle. Do not gate this on reading the current style: a style is not
+    // required to carry a `name`, and most do not.
+    if (!map || appliedStyleUrlRef.current === basemapStyleUrl) {
       return undefined;
     }
     appliedStyleUrlRef.current = basemapStyleUrl;
@@ -217,10 +216,14 @@ export function MapLibreViewport({
     };
 
     map.setStyle(basemapStyleUrl);
-    map.once("idle", handleReady);
+
+    // `style.load` is the point at which the new style is installed and ready
+    // to receive sources. `idle` is not: it can fire while the replacement is
+    // still loading, and anything added then is wiped by the incoming style.
+    map.once("style.load", handleReady);
 
     return () => {
-      map.off("idle", handleReady);
+      map.off("style.load", handleReady);
     };
   }, [basemapStyleUrl]);
 

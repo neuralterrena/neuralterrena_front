@@ -148,30 +148,38 @@ export function MapControlLayer({
     );
   };
 
+  /**
+   * A basemap switcher with a single option is furniture, not a control: it
+   * only appears once the environment configures a second style.
+   */
+  const toolButtons: { icon: ReactNode; label: string; panel: PanelId }[] = [
+    { icon: <Layers3 aria-hidden="true" strokeWidth={1.5} />, label: forecastPanelTitle, panel: "layers" },
+    ...(basemaps.length > 1
+      ? [{ icon: <SlidersHorizontal aria-hidden="true" strokeWidth={1.5} />, label: t("map.basemap"), panel: "basemap" as const }]
+      : []),
+    { icon: <Ruler aria-hidden="true" strokeWidth={1.5} />, label: t("map.measure"), panel: "measure" },
+    { icon: <Settings2 aria-hidden="true" strokeWidth={1.5} />, label: t("map.settings"), panel: "settings" },
+  ];
+
   const tools = (
     <MapGroup label={t("map.tools")}>
-      <MapButton active={activePanel === "layers"} label={forecastPanelTitle} onClick={() => toggle("layers")}>
-        <Layers3 aria-hidden="true" strokeWidth={1.5} />
-      </MapButton>
-      <MapGroupDivider />
-      <MapButton active={activePanel === "basemap"} label={t("map.basemap")} onClick={() => toggle("basemap")}>
-        <SlidersHorizontal aria-hidden="true" strokeWidth={1.5} />
-      </MapButton>
-      <MapGroupDivider />
-      <MapButton active={activePanel === "measure"} label={t("map.measure")} onClick={() => toggle("measure")}>
-        <Ruler aria-hidden="true" strokeWidth={1.5} />
-      </MapButton>
-      <MapGroupDivider />
-      <MapButton active={activePanel === "settings"} label={t("map.settings")} onClick={() => toggle("settings")}>
-        <Settings2 aria-hidden="true" strokeWidth={1.5} />
-      </MapButton>
+      {toolButtons.map((tool, index) => (
+        <Fragment key={tool.panel}>
+          {index > 0 ? <MapGroupDivider /> : null}
+          <MapButton active={activePanel === tool.panel} label={tool.label} onClick={() => toggle(tool.panel)}>
+            {tool.icon}
+          </MapButton>
+        </Fragment>
+      ))}
     </MapGroup>
   );
 
   const mobileTabs: MobileTab<PanelId>[] = [
     { icon: <Search aria-hidden="true" strokeWidth={1.5} />, label: t("map.searchShort"), value: "search" },
     { icon: <Layers3 aria-hidden="true" strokeWidth={1.5} />, label: t("map.layersShort"), value: "layers" },
-    { icon: <SlidersHorizontal aria-hidden="true" strokeWidth={1.5} />, label: t("map.basemapShort"), value: "basemap" },
+    ...(basemaps.length > 1
+      ? [{ icon: <SlidersHorizontal aria-hidden="true" strokeWidth={1.5} />, label: t("map.basemapShort"), value: "basemap" as const }]
+      : []),
     { icon: <Ruler aria-hidden="true" strokeWidth={1.5} />, label: t("map.measureShort"), value: "measure" },
     { icon: <Settings2 aria-hidden="true" strokeWidth={1.5} />, label: t("map.settingsShort"), value: "settings" },
   ];

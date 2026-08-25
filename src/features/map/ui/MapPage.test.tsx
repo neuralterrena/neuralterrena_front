@@ -2,9 +2,6 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { useEffect } from "react";
 import type { PropsWithChildren } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { LanguageProvider } from "@/shared/providers/LanguageProvider";
-import { ThemeProvider } from "@/shared/providers/ThemeProvider";
-import { LanguageSwitcher } from "@/shared/ui/LanguageSwitcher";
 
 /**
  * A stand-in for the MapLibre instance: the control layer only needs a camera
@@ -44,8 +41,20 @@ const viewport = vi.fn(({ children, onMapReady, rasterUrl }: PropsWithChildren<{
 });
 vi.mock("./MapLibreViewport", () => ({ MapLibreViewport: viewport }));
 
+/**
+ * MapPage reads its configuration once, at module scope, so a test that needs
+ * a different environment has to re-import it. Every module in the tree is
+ * therefore imported here rather than at the top of the file: a static import
+ * would survive `vi.resetModules()` and hand the providers a different copy of
+ * the React context than the one the freshly imported page consumes.
+ */
 const renderPage = async () => {
-  const { MapPage } = await import("./MapPage");
+  const [{ MapPage }, { LanguageProvider, ThemeProvider }, { LanguageSwitcher }] = await Promise.all([
+    import("./MapPage"),
+    import("@/shared/providers"),
+    import("@/shared/ui/LanguageSwitcher"),
+  ]);
+
   return render(
     <LanguageProvider>
       <ThemeProvider>
@@ -67,7 +76,7 @@ const stubForecastHub = () => {
   });
 };
 
-afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); viewport.mockClear(); });
+afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.resetModules(); viewport.mockClear(); });
 
 describe("MapPage model and timeline", () => {
   it("toggles the forecast panel while preserving its selection and the mounted map viewport", async () => {
@@ -136,6 +145,24 @@ describe("MapPage control layer", () => {
     fireEvent.change(search, { target: { value: "43.36, -5.85" } });
     fireEvent.click(screen.getByRole("button", { name: /Ir a las coordenadas/ }));
     expect(fakeMap.flyTo).toHaveBeenCalledWith(expect.objectContaining({ center: [-5.85, 43.36] }));
+  });
+
+  it("hides the basemap switcher while only one style is configured", async () => {
+    stubForecastHub();
+    await renderPage();
+
+    await screen.findByRole("button", { name: "Medir" });
+    expect(screen.queryByRole("button", { name: "Mapa base" })).not.toBeInTheDocument();
+  });
+
+  it("offers the basemap switcher once a second style is configured", async () => {
+    vi.stubEnv("VITE_MAP_STYLE_TERRAIN_URL", "https://maps.example.test/terrain.json");
+    stubForecastHub();
+    await renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Mapa base" }));
+    expect(screen.getByRole("radio", { name: "Topográfico" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Relieve" })).toBeInTheDocument();
   });
 
   it("keeps the measure readout stable before enough points are placed", async () => {
