@@ -1,4 +1,5 @@
 import {
+  Gauge,
   Check,
   ChevronLeft,
   Globe2,
@@ -147,6 +148,10 @@ export function AuthenticatedAppLayout() {
           <NavLink end to="/">
             <Layers3 aria-hidden="true" size={18} strokeWidth={1.75} />
             <span className="console-nav__label">{t("console.map")}</span>
+          </NavLink>
+          <NavLink to="/command">
+            <Gauge aria-hidden="true" size={18} strokeWidth={1.75} />
+            <span className="console-nav__label">{t("console.command")}</span>
           </NavLink>
         </nav>
 

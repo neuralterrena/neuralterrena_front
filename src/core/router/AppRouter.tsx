@@ -7,7 +7,7 @@ import {
   ResetPasswordConfirmPage,
   useAuth,
 } from "@/features/auth";
-import { MapPage } from "@/features/map";
+import { CommandView, MapPage } from "@/features/map";
 import { AuthenticatedAppLayout } from "@/core/ui/AuthenticatedAppLayout";
 import { registerUnauthorizedHandler } from "@/features/auth/model/authNavigation";
 
@@ -53,6 +53,14 @@ export function AppRouter() {
         >
           <Route index element={<MapPage />} />
         </Route>
+        <Route
+          element={
+            <RequireAuth>
+              <CommandView />
+            </RequireAuth>
+          }
+          path="/command"
+        />
         <Route element={<Navigate replace to="/" />} path="*" />
       </Routes>
     </>

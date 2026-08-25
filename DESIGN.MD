@@ -142,9 +142,34 @@ Reglas al extenderla:
 - Los primitivos que el canon dibuja como contenedores se renderizan como `button` reales para que sean operables con teclado; el reset vive en las extensiones.
 - El único color de estado en los controles sigue siendo el azul de acción; el rojo queda para alertas.
 
-### Terrain Intelligence y Command View — pendientes
+### Command View — shell y timeline implementados
 
-Especificadas en el canon con sus hojas `ui_kits/product/ti.css` y `command.css`; **este repo aún no las implementa**. Al abordarlas, seguir sus prefijos de clase (`.nt-ti*`, `.nt-sev*`, `.nt-warn*`, `.nt-tl*`, `.cmd*`) y sus reglas de densidad: altura de control 28 px, texto base 13 px, eyebrows mono de 9–10 px, radios de 2 px, hairlines de 1 px, `tabular-nums` en todo número, sin sombras, sin glass, sin blur, sin glow.
+Vive en `src/styles/command.scss` (port de `ui_kits/product/command.css` más extensiones del proyecto) y en `src/features/map/ui/command/`. Ruta `/command`, fuera del shell de consola porque `.cmd` es `position: fixed; inset: 0` y una sidebar debajo sería espacio muerto.
+
+- Tema oscuro militar como primario; `data-mode="civ"` da el shell civil claro.
+- Barra de estado: relojes local y Zulu, badge `EN VIVO` / `PREVISIÓN T+hh:mm` / `REVISIÓN T−hh:mm`, salud del feed por antigüedad del ciclo, conmutador MIL/CIV.
+- Rail de módulos, paneles flotantes que nunca encogen el mapa, HUD que cede el mobiliario secundario por debajo de 1560 px, vista limpia y atajos: `Espacio` reproducir, `N` ir a ahora, flechas paso de cursor, `\` vista limpia.
+- Timeline con un carril por variable operativa más la franja de iluminación. Arrastrar el cursor re-deriva el ráster del mapa y todas las lecturas.
+
+**Densidad de esta capa:** altura de control 28 px, texto base 13 px, eyebrows mono de 9–10 px, radios de 2 px, hairlines de 1 px, `tabular-nums` en todo número, sin sombras, sin glass, sin blur, sin glow.
+
+**Procedencia del dato — regla dura.** Es una propiedad de **cada muestra**, nunca del lado de la línea NOW: las estaciones se caen y dejan huecos en mitad del pasado, la telemetría llega con retraso, y hay variables sin estación cercana que son previsión de punta a punta. NOW marca el instante actual y nada más.
+
+| Estado | Tratamiento | Clase |
+|---|---|---|
+| Observado | Relleno sólido, base continua | `.cmd-tl__prov--obs` |
+| Previsto | Trama a 45°, 1 px cada 4 px | `.cmd-tl__prov--fct` |
+| Sin dato | Sin relleno, base punteada | `.cmd-tl__prov--nd` |
+
+En la procedencia **no se gasta color**: queda reservado a severidad, y el rojo sigue siendo solo alerta, de modo que un segmento que cruza el umbral puede ponerse rojo siendo observado o previsto sin ambigüedad. La trama no baja de 1/4 px porque hace muaré en pantallas de operación.
+
+**Carriles y variables.** El canon propone visibilidad, viento, T−Td, cobertura LOS y techo; el Forecast Hub solo tiene viento. Los carriles son las variables que existen de verdad: viento, temperatura 2 m, inversión térmica y precipitación, más la franja de iluminación, que es astronomía y no necesita backend. Los umbrales operativos de `commandLanes.ts` son **provisionales** y deben revisarse con quien posee el procedimiento antes de usarse para decidir.
+
+**Hoy no hay observación.** El Hub no expone ningún endpoint de estaciones, así que todos los carriles se pintan como previstos y el eyebrow dice `MODELO`. El timeline afirma la verdad. Cuando exista fuente de estaciones, esas muestras pasan a `obs` y se dibujan sólidas sin rediseñar nada.
+
+### Terrain Intelligence — pendiente
+
+Especificada en el canon con `ui_kits/product/ti.css`; **este repo aún no la implementa**. Al abordarla, seguir sus prefijos de clase (`.nt-ti*`, `.nt-sev*`, `.nt-warn*`, `.nt-tl*`) y la misma densidad que el Command View.
 
 ## Iconografía
 

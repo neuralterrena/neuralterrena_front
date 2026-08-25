@@ -1,0 +1,500 @@
+/* ============================================================
+   Neural Terrena — Command View (map-centric operations)
+   Dark military theme as PRIMARY. Dual-use MIL / CIV.
+   Density, hairlines, tabular mono. No gradients, no glass,
+   no glow. Professional before modern.
+
+   Requires colors_and_type.css for fonts + brand tokens.
+   Severity canon holds: RED IS THE ONLY ALERT COLOUR.
+   Lower tiers carry urgency through weight and position.
+   Prefix: .cmd*
+   ============================================================ */
+
+.cmd {
+  /* --- dark operational surfaces (desaturated, near-black) --- */
+  --tl-h: 220px;
+  --top-off: 38px;
+  --hud-left: 54px;
+  --c-bg: #0A0C0E;
+  --c-surface: #12161A;
+  --c-surface-2: #171C22;
+  --c-surface-3: #1D242B;
+  --c-line: #232B33;
+  --c-line-strong: #313B45;
+  --c-fg: #E6EAED;
+  --c-fg-muted: #93A0AA;
+  --c-fg-subtle: #636E77;
+  /* institutional blue, lifted for legibility on near-black */
+  --c-accent: #4C8FCE;
+  --c-accent-dim: #24405C;
+  /* the one alert colour */
+  --c-alert: #E04B4B;
+  --c-alert-dim: #3A1A1C;
+  --c-ok: #8A9AA5;
+  /* geometry */
+  --c-tap: 28px;
+  --c-rail: 46px;
+  --c-radius: 2px;
+  position: fixed;
+  inset: 0;
+  background: var(--c-bg);
+  color: var(--c-fg);
+  font-family: var(--nt-font-ui);
+  font-size: 13px;
+  overflow: hidden;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+/* CIV mode: same structure, lighter neutral shell (dual-use) */
+.cmd[data-mode="civ"] {
+  --c-bg: #EDEFF1;
+  --c-surface: #FFFFFF;
+  --c-surface-2: #F5F7F8;
+  --c-surface-3: #EBEEF0;
+  --c-line: #DDE1E4;
+  --c-line-strong: #C2C9CE;
+  --c-fg: #16191C;
+  --c-fg-muted: #59636B;
+  --c-fg-subtle: #8B959C;
+  --c-accent: #1E4F82;
+  --c-accent-dim: #D6E2EE;
+  --c-alert: #C62828;
+  --c-alert-dim: #F7E3E3;
+}
+.cmd * { box-sizing: border-box; }
+.cmd .mono { font-family: var(--nt-font-mono); font-variant-numeric: tabular-nums; }
+
+/* ============================================================
+   Map bed — fills everything; panels float above it
+   ============================================================ */
+.cmd__map { position: absolute; inset: 0; z-index: 0; }
+.cmd__map svg { display: block; width: 100%; height: 100%; }
+
+/* Overlay layer: pointer-events pass through except on panels */
+.cmd__over { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.cmd__over > * { pointer-events: auto; }
+.cmd.is-clear .cmd__over { opacity: 0; pointer-events: none; }
+.cmd__over { transition: opacity 160ms cubic-bezier(0.2,0.7,0.2,1); }
+.cmd.is-clear .cmd__clearbtn { opacity: 1; pointer-events: auto; }
+
+/* ============================================================
+   Top status strip
+   ============================================================ */
+.cmd__top {
+  position: absolute; top: 0; left: 0; right: 0; height: 38px;
+  display: flex; align-items: stretch;
+  background: color-mix(in srgb, var(--c-surface) 94%, transparent);
+  border-bottom: 1px solid var(--c-line);
+  backdrop-filter: none;
+}
+.cmd__top-l, .cmd__top-r { display: flex; align-items: center; gap: 2px; padding: 0 8px; }
+.cmd__top-c { flex: 1; display: flex; align-items: center; justify-content: center; gap: 18px; min-width: 0; }
+.cmd__ident { display: flex; align-items: center; gap: 9px; padding-right: 12px; margin-right: 4px; border-right: 1px solid var(--c-line); height: 100%; }
+.cmd__marks { display: flex; gap: 3px; }
+.cmd__marks i { width: 7px; height: 7px; border-radius: 1px; display: block; }
+.cmd__ident-t { font-size: 12px; font-weight: 700; letter-spacing: 0.02em; line-height: 1; }
+.cmd__ident-s { font-family: var(--nt-font-mono); font-size: 9px; color: var(--c-fg-subtle); letter-spacing: 0.08em; margin-top: 2px; }
+
+.cmd__clock { font-family: var(--nt-font-mono); font-variant-numeric: tabular-nums; display: flex; align-items: baseline; gap: 7px; }
+.cmd__clock b { font-size: 15px; font-weight: 500; letter-spacing: 0.01em; }
+.cmd__clock span { font-size: 10px; color: var(--c-fg-subtle); letter-spacing: 0.06em; }
+
+.cmd__state {
+  display: inline-flex; align-items: center; gap: 6px; height: 21px; padding: 0 9px;
+  border: 1px solid var(--c-line-strong); border-radius: var(--c-radius);
+  font-family: var(--nt-font-mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.12em;
+  color: var(--c-fg-muted);
+}
+.cmd__state--live { border-color: var(--c-accent); color: var(--c-accent); }
+.cmd__state--fwd { border-color: var(--c-line-strong); color: var(--c-fg); }
+.cmd__led { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.cmd__state--live .cmd__led { animation: cmd-blink 1.6s steps(1,end) infinite; }
+@keyframes cmd-blink { 0%,60%{opacity:1} 61%,100%{opacity:0.25} }
+@media (prefers-reduced-motion: reduce) { .cmd__state--live .cmd__led { animation: none; } }
+
+.cmd__feeds { display: flex; align-items: center; gap: 14px; }
+.cmd__feed { display: flex; align-items: center; gap: 5px; font-family: var(--nt-font-mono); font-size: 10px; color: var(--c-fg-subtle); letter-spacing: 0.04em; }
+.cmd__feed i { width: 5px; height: 5px; border-radius: 50%; background: var(--c-ok); display: block; }
+.cmd__feed--stale i { background: var(--c-alert); }
+.cmd__feed--stale { color: var(--c-alert); }
+
+/* Icon button — the universal chrome control */
+.cmd-ib {
+  appearance: none; -webkit-appearance: none;
+  height: var(--c-tap); min-width: var(--c-tap); padding: 0 6px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  background: transparent; border: 1px solid transparent; border-radius: var(--c-radius);
+  color: var(--c-fg-muted); cursor: pointer; font-family: var(--nt-font-ui); font-size: 11px; font-weight: 600;
+  transition: background 120ms, color 120ms, border-color 120ms;
+}
+.cmd-ib:hover { background: var(--c-surface-3); color: var(--c-fg); }
+.cmd-ib:focus-visible { outline: 1px solid var(--c-accent); outline-offset: 1px; }
+.cmd-ib.is-on { background: var(--c-accent-dim); color: var(--c-accent); border-color: var(--c-accent); }
+.cmd-ib--bd { border-color: var(--c-line-strong); }
+.cmd-ib svg { width: 15px; height: 15px; flex: none; }
+.cmd-ib--sm { height: 22px; min-width: 22px; }
+.cmd-ib--sm svg { width: 13px; height: 13px; }
+.cmd__seg { display: flex; border: 1px solid var(--c-line-strong); border-radius: var(--c-radius); overflow: hidden; height: 22px; }
+.cmd__seg button {
+  appearance: none; -webkit-appearance: none; border: none; border-left: 1px solid var(--c-line);
+  background: transparent; color: var(--c-fg-subtle); cursor: pointer;
+  font-family: var(--nt-font-mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.1em; padding: 0 9px;
+}
+.cmd__seg button:first-child { border-left: none; }
+.cmd__seg button:hover { background: var(--c-surface-3); color: var(--c-fg); }
+.cmd__seg button.is-on { background: var(--c-accent); color: #fff; }
+
+/* ============================================================
+   Left module rail
+   ============================================================ */
+.cmd__rail {
+  position: absolute; top: var(--top-off); left: 0; bottom: 0; width: var(--c-rail);
+  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0;
+  background: color-mix(in srgb, var(--c-surface) 94%, transparent);
+  border-right: 1px solid var(--c-line);
+}
+.cmd__railbtn {
+  appearance: none; -webkit-appearance: none; position: relative;
+  width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid transparent; border-radius: var(--c-radius);
+  color: var(--c-fg-subtle); cursor: pointer; transition: background 120ms, color 120ms;
+}
+.cmd__railbtn:hover { background: var(--c-surface-3); color: var(--c-fg); }
+.cmd__railbtn.is-on { background: var(--c-accent-dim); color: var(--c-accent); }
+.cmd__railbtn.is-on::before { content: ""; position: absolute; left: -1px; top: 6px; bottom: 6px; width: 2px; background: var(--c-accent); }
+.cmd__railbtn svg { width: 17px; height: 17px; }
+.cmd__railbtn b {
+  position: absolute; top: 3px; right: 3px; min-width: 13px; height: 13px; padding: 0 3px;
+  background: var(--c-alert); color: #fff; border-radius: 7px;
+  font-family: var(--nt-font-mono); font-size: 9px; font-weight: 700; line-height: 13px; text-align: center;
+}
+.cmd__rail-sp { flex: 1; }
+.cmd__rail-div { width: 22px; height: 1px; background: var(--c-line); margin: 6px 0; }
+
+/* ============================================================
+   Floating panel (dockable, collapsible)
+   ============================================================ */
+.cmd-panel {
+  position: absolute; display: flex; flex-direction: column; min-height: 0;
+  background: color-mix(in srgb, var(--c-surface) 96%, transparent);
+  border: 1px solid var(--c-line-strong); border-radius: var(--c-radius);
+}
+/* --tl-h and --top-off are set from the app so panels, HUD and the timeline
+   never overlap regardless of lane count or banner state. */
+.cmd-panel--l { top: calc(var(--top-off) + 8px); left: calc(var(--c-rail) + 8px); width: 336px; max-height: calc(100vh - var(--top-off) - var(--tl-h) - 116px); }
+.cmd-panel--r { top: calc(var(--top-off) + 8px); right: 8px; width: 348px; max-height: calc(100vh - var(--top-off) - var(--tl-h) - 116px); }
+.cmd-panel__hd {
+  display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 4px 0 10px; flex: none;
+  border-bottom: 1px solid var(--c-line); background: var(--c-surface-2);
+}
+.cmd-panel__hd svg { width: 14px; height: 14px; color: var(--c-fg-muted); flex: none; }
+.cmd-panel__t { flex: 1; font-family: var(--nt-font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--c-fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cmd-panel__n { font-family: var(--nt-font-mono); font-size: 10px; color: var(--c-fg-subtle); }
+.cmd-panel__bd { padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.cmd-panel.is-collapsed .cmd-panel__bd { display: none; }
+.cmd-panel__bd::-webkit-scrollbar { width: 8px; }
+.cmd-panel__bd::-webkit-scrollbar-thumb { background: var(--c-line-strong); border-radius: 4px; }
+.cmd-panel__bd::-webkit-scrollbar-track { background: transparent; }
+
+.cmd-sec { display: flex; flex-direction: column; gap: 7px; }
+.cmd-sec__h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cmd-sec__t { font-family: var(--nt-font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--c-fg-subtle); }
+.cmd-rule-line { height: 1px; background: var(--c-line); }
+
+/* ---- data readouts ---- */
+.cmd-kv { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--c-line); border: 1px solid var(--c-line); }
+.cmd-kv--3 { grid-template-columns: repeat(3, 1fr); }
+.cmd-kv__c { background: var(--c-surface); padding: 7px 9px; }
+.cmd-kv__k { font-family: var(--nt-font-mono); font-size: 8.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-fg-subtle); }
+.cmd-kv__v { font-family: var(--nt-font-mono); font-variant-numeric: tabular-nums; font-size: 17px; font-weight: 500; line-height: 1.15; margin-top: 3px; }
+.cmd-kv__v s { text-decoration: none; font-size: 10px; color: var(--c-fg-subtle); margin-left: 2px; }
+.cmd-kv__c--alert { background: var(--c-alert-dim); }
+.cmd-kv__c--alert .cmd-kv__v { color: var(--c-alert); }
+.cmd-kv__d { font-family: var(--nt-font-mono); font-size: 9px; color: var(--c-fg-subtle); margin-top: 2px; }
+
+/* rows */
+.cmd-row { display: flex; align-items: center; gap: 9px; padding: 6px 7px; border: 1px solid transparent; border-radius: var(--c-radius); cursor: pointer; }
+.cmd-row:hover { background: var(--c-surface-3); }
+.cmd-row.is-sel { background: var(--c-surface-3); border-color: var(--c-line-strong); }
+.cmd-row__m { flex: 1; min-width: 0; }
+.cmd-row__t { font-size: 12px; font-weight: 500; line-height: 1.25; }
+.cmd-row__s { font-family: var(--nt-font-mono); font-size: 9.5px; color: var(--c-fg-subtle); margin-top: 2px; display: flex; flex-wrap: wrap; gap: 3px 10px; }
+.cmd-sw { width: 10px; height: 10px; border-radius: 1px; flex: none; }
+.cmd-chk { width: 14px; height: 14px; flex: none; border: 1px solid var(--c-line-strong); border-radius: 1px; display: inline-flex; align-items: center; justify-content: center; color: transparent; }
+.cmd-chk svg { width: 11px; height: 11px; }
+[aria-checked="true"] > .cmd-chk { background: var(--c-accent); border-color: var(--c-accent); color: #fff; }
+
+/* toggle switch (rule arm/disarm) */
+.cmd-tg { width: 26px; height: 14px; border-radius: 8px; background: var(--c-surface-3); border: 1px solid var(--c-line-strong); position: relative; flex: none; cursor: pointer; transition: background 120ms, border-color 120ms; }
+.cmd-tg::after { content: ""; position: absolute; top: 1px; left: 1px; width: 10px; height: 10px; border-radius: 50%; background: var(--c-fg-subtle); transition: transform 140ms cubic-bezier(0.2,0.7,0.2,1), background 140ms; }
+.cmd-tg.is-on { background: var(--c-accent-dim); border-color: var(--c-accent); }
+.cmd-tg.is-on::after { transform: translateX(12px); background: var(--c-accent); }
+
+/* severity — canon: red only for alert; others neutral */
+.cmd-sev { --sv: var(--c-fg-subtle); }
+.cmd-sev--critical { --sv: var(--c-alert); }
+.cmd-sev--warning { --sv: var(--c-fg); }
+.cmd-sev--advisory { --sv: var(--c-fg-subtle); }
+.cmd-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sv); flex: none; }
+.cmd-tag { font-family: var(--nt-font-mono); font-size: 8.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sv); }
+
+/* alert card */
+.cmd-alert {
+  display: flex; gap: 9px; padding: 9px; cursor: pointer;
+  background: var(--c-surface-2); border: 1px solid var(--c-line);
+  border-left: 2px solid var(--sv); border-radius: var(--c-radius);
+}
+.cmd-alert:hover { background: var(--c-surface-3); }
+.cmd-alert.is-sel { border-color: var(--c-line-strong); border-left-color: var(--sv); background: var(--c-surface-3); }
+.cmd-alert--critical { background: var(--c-alert-dim); border-color: color-mix(in srgb, var(--c-alert) 45%, transparent); }
+.cmd-alert__m { flex: 1; min-width: 0; }
+.cmd-alert__t { font-size: 12px; font-weight: 600; line-height: 1.3; }
+.cmd-alert__x { font-family: var(--nt-font-mono); font-size: 9.5px; color: var(--c-fg-muted); margin-top: 4px; line-height: 1.45; }
+.cmd-alert__lead { flex: none; text-align: right; }
+.cmd-alert__lead b { display: block; font-family: var(--nt-font-mono); font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 700; color: var(--sv); line-height: 1; }
+.cmd-alert__lead s { text-decoration: none; display: block; font-family: var(--nt-font-mono); font-size: 8px; letter-spacing: 0.1em; color: var(--c-fg-subtle); margin-top: 3px; }
+
+/* rule expression */
+.cmd-expr {
+  font-family: var(--nt-font-mono); font-size: 10.5px; line-height: 1.6;
+  background: var(--c-bg); border: 1px solid var(--c-line); border-radius: var(--c-radius);
+  padding: 8px 9px; color: var(--c-fg-muted); word-break: break-word;
+}
+.cmd-expr b { color: var(--c-accent); font-weight: 500; }
+.cmd-expr i { color: var(--c-fg); font-style: normal; }
+.cmd-expr u { color: var(--c-alert); text-decoration: none; }
+
+/* meter */
+.cmd-meter { display: flex; flex-direction: column; gap: 4px; }
+.cmd-meter__r { display: flex; align-items: baseline; justify-content: space-between; }
+.cmd-meter__k { font-family: var(--nt-font-mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-fg-subtle); }
+.cmd-meter__v { font-family: var(--nt-font-mono); font-variant-numeric: tabular-nums; font-size: 11px; font-weight: 600; }
+.cmd-meter__t { height: 4px; background: var(--c-surface-3); overflow: hidden; }
+.cmd-meter__f { height: 100%; background: var(--c-accent); }
+.cmd-meter__f--alert { background: var(--c-alert); }
+
+/* buttons */
+.cmd-btn {
+  appearance: none; -webkit-appearance: none; height: 26px; padding: 0 11px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  background: var(--c-accent); border: 1px solid var(--c-accent); border-radius: var(--c-radius);
+  color: #fff; font-family: var(--nt-font-ui); font-size: 11px; font-weight: 600; cursor: pointer;
+}
+.cmd-btn:hover { filter: brightness(1.12); }
+.cmd-btn svg { width: 13px; height: 13px; }
+.cmd-btn--ghost { background: transparent; color: var(--c-fg-muted); border-color: var(--c-line-strong); }
+.cmd-btn--ghost:hover { background: var(--c-surface-3); color: var(--c-fg); filter: none; }
+.cmd-btn--alert { background: var(--c-alert); border-color: var(--c-alert); }
+.cmd-btnrow { display: flex; gap: 6px; }
+
+/* ============================================================
+   Critical banner — full strip under the top bar (no overlap)
+   The only red-filled surface in the system.
+   ============================================================ */
+.cmd-banner {
+  position: absolute; top: 38px; left: var(--c-rail); right: 0; height: 34px;
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 8px 0 12px; background: var(--c-alert); color: #fff;
+  border-bottom: 1px solid color-mix(in srgb, var(--c-alert) 60%, #000);
+}
+.cmd-banner svg { width: 17px; height: 17px; flex: none; }
+.cmd-banner__m { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 12px; overflow: hidden; }
+.cmd-banner__t { font-size: 12px; font-weight: 700; white-space: nowrap; }
+.cmd-banner__s { font-family: var(--nt-font-mono); font-size: 9.5px; opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cmd-banner b { font-family: var(--nt-font-mono); font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 700; flex: none; }
+.cmd-banner button { appearance: none; -webkit-appearance: none; height: 22px; padding: 0 9px; display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.5); border-radius: var(--c-radius); color: #fff; font-family: var(--nt-font-ui); font-size: 10.5px; font-weight: 600; cursor: pointer; flex: none; }
+.cmd-banner button:hover { background: rgba(255,255,255,0.22); }
+.cmd-banner .cmd-banner__x { border: none; background: transparent; padding: 0 2px; min-width: 20px; justify-content: center; }
+
+/* ============================================================
+   Map HUD — corner readouts, anchored above the timeline
+   ============================================================ */
+.cmd-hud { position: absolute; display: flex; gap: 6px; bottom: calc(var(--tl-h) + 16px); }
+.cmd-hud--bl { left: var(--hud-left); flex-direction: column; align-items: flex-start; gap: 6px; max-width: calc(100vw - var(--hud-left) - 372px); transition: left 160ms cubic-bezier(0.2,0.7,0.2,1); }
+.cmd-hud__row { display: flex; gap: 6px; align-items: flex-end; flex-wrap: wrap; }
+.cmd-hud--br { right: 8px; flex-direction: column; align-items: flex-end; }
+.cmd-pill {
+  display: inline-flex; align-items: center; gap: 8px; height: 22px; padding: 0 8px;
+  background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+  border: 1px solid var(--c-line-strong); border-radius: var(--c-radius);
+  font-family: var(--nt-font-mono); font-variant-numeric: tabular-nums; font-size: 10px; color: var(--c-fg);
+}
+.cmd-pill s { text-decoration: none; font-size: 8.5px; letter-spacing: 0.1em; color: var(--c-fg-subtle); }
+.cmd-scale { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
+.cmd-scale__b { height: 6px; width: 90px; border: 1px solid var(--c-fg-muted); border-top: none; display: flex; }
+.cmd-scale__b i { flex: 1; border-left: 1px solid var(--c-fg-muted); }
+.cmd-scale__b i:first-child { border-left: none; }
+.cmd-scale__l { font-family: var(--nt-font-mono); font-size: 9.5px; color: var(--c-fg-muted); }
+
+.cmd-legend { background: color-mix(in srgb, var(--c-surface) 94%, transparent); border: 1px solid var(--c-line-strong); border-radius: var(--c-radius); padding: 7px 9px; min-width: 132px; }
+.cmd-legend__t { font-family: var(--nt-font-mono); font-size: 8.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-fg-subtle); margin-bottom: 6px; }
+.cmd-legend__i { display: flex; align-items: center; gap: 7px; font-size: 10px; color: var(--c-fg-muted); margin-top: 4px; }
+.cmd-legend__i i { width: 11px; height: 11px; border-radius: 1px; flex: none; display: block; }
+.cmd-legend__ramp { height: 7px; }
+.cmd-legend__sc { display: flex; justify-content: space-between; font-family: var(--nt-font-mono); font-size: 8.5px; color: var(--c-fg-subtle); margin-top: 3px; }
+
+/* zoom cluster */
+.cmd-zoom { display: flex; flex-direction: column; background: color-mix(in srgb, var(--c-surface) 94%, transparent); border: 1px solid var(--c-line-strong); border-radius: var(--c-radius); overflow: hidden; }
+.cmd-zoom button { appearance: none; -webkit-appearance: none; width: 26px; height: 26px; background: transparent; border: none; color: var(--c-fg-muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.cmd-zoom button:hover { background: var(--c-surface-3); color: var(--c-fg); }
+.cmd-zoom button + button { border-top: 1px solid var(--c-line); }
+.cmd-zoom svg { width: 14px; height: 14px; }
+
+/* clear-view restore affordance */
+.cmd__clearbtn {
+  position: absolute; z-index: 5; top: 8px; right: 8px; opacity: 0; pointer-events: none;
+  display: inline-flex; align-items: center; gap: 7px; height: 26px; padding: 0 10px;
+  background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+  border: 1px solid var(--c-line-strong); border-radius: var(--c-radius);
+  color: var(--c-fg-muted); font-family: var(--nt-font-mono); font-size: 10px; letter-spacing: 0.1em;
+  cursor: pointer; transition: opacity 160ms;
+}
+.cmd__clearbtn:hover { color: var(--c-fg); }
+.cmd__clearbtn svg { width: 14px; height: 14px; }
+
+/* ============================================================
+   TIMELINE — the protagonist
+   ============================================================ */
+.cmd-tl {
+  position: absolute; left: calc(var(--c-rail) + 8px); right: 8px; bottom: 8px;
+  background: color-mix(in srgb, var(--c-surface) 96%, transparent);
+  border: 1px solid var(--c-line-strong); border-radius: var(--c-radius);
+  display: flex; flex-direction: column;
+}
+.cmd-tl__hd { display: flex; align-items: center; gap: 12px; height: 34px; padding: 0 8px; border-bottom: 1px solid var(--c-line); flex: none; }
+.cmd-tl.is-collapsed .cmd-tl__hd { border-bottom: none; }
+.cmd-tl__grp { display: flex; align-items: center; gap: 4px; }
+.cmd-tl__cur { display: flex; align-items: baseline; gap: 8px; font-family: var(--nt-font-mono); font-variant-numeric: tabular-nums; padding-left: 4px; }
+.cmd-tl__cur b { font-size: 16px; font-weight: 500; }
+.cmd-tl__cur s { text-decoration: none; font-size: 10px; color: var(--c-fg-subtle); letter-spacing: 0.06em; }
+.cmd-tl__off { font-family: var(--nt-font-mono); font-variant-numeric: tabular-nums; font-size: 11px; font-weight: 600; color: var(--c-accent); min-width: 62px; }
+.cmd-tl__sp { flex: 1; }
+.cmd-tl__body { padding: 6px 8px 4px; }
+.cmd-tl.is-collapsed .cmd-tl__body { display: none; }
+
+.cmd-tl__lanes { display: flex; flex-direction: column; }
+.cmd-tl__lane { display: flex; align-items: stretch; height: 30px; border-top: 1px solid var(--c-line); }
+.cmd-tl__lane:first-child { border-top: none; }
+.cmd-tl__lane-l {
+  width: 96px; flex: none; display: flex; flex-direction: column; justify-content: center; gap: 1px;
+  padding-right: 8px; border-right: 1px solid var(--c-line);
+}
+.cmd-tl__lane-n { font-family: var(--nt-font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-fg-muted); white-space: nowrap; }
+/* Source eyebrow — which feed the lane is anchored to, read at a glance.
+   `EST 08023` = physical station; `GFS 00Z` = model run, no measurement. */
+.cmd-tl__lane-s { font-family: var(--nt-font-mono); font-size: 9px; line-height: 1; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-fg-subtle); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* three rows must fit the 30px lane: 8.5 + 9 + 10 at line-height 1, no gaps */
+.cmd-tl__lane-l:has(.cmd-tl__lane-s) { gap: 0; }
+.cmd-tl__lane-l:has(.cmd-tl__lane-s) .cmd-tl__lane-n { line-height: 1; }
+.cmd-tl__lane-l:has(.cmd-tl__lane-s) .cmd-tl__lane-v { font-size: 10px; line-height: 1; }
+.cmd-tl__lane-v { font-family: var(--nt-font-mono); font-variant-numeric: tabular-nums; font-size: 10.5px; color: var(--c-fg); }
+.cmd-tl__lane-v.is-brk { color: var(--c-alert); font-weight: 600; }
+.cmd-tl__lane-c { flex: 1; position: relative; min-width: 0; }
+.cmd-tl__lane-c svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 1; }
+
+/* ------------------------------------------------------------
+   PROVENANCE — a property of each SAMPLE, never of the side of NOW.
+   Stations fail and leave holes in the middle of the past, telemetry
+   arrives late (the last minutes before NOW are already model), and
+   some variables have no station anywhere near — forecast end to end.
+   So provenance is drawn per SEGMENT inside a lane, and NOW marks the
+   present instant and nothing else.
+   No colour is spent here: colour stays reserved for severity and red
+   stays alert-only, so a segment crossing the operational threshold
+   can go red while observed OR while forecast without ambiguity.
+   ------------------------------------------------------------ */
+.cmd-tl__prov { position: absolute; top: 0; bottom: 0; z-index: 0; pointer-events: none; --pv: var(--c-surface-2); --pv-ln: var(--c-line-strong); --pv-hatch: var(--c-line-strong); }
+.cmd-tl__prov.is-brk { --pv: color-mix(in srgb, var(--c-alert) 22%, var(--c-surface-2)); --pv-ln: var(--c-alert); --pv-hatch: var(--c-alert); }
+/* observed — solid fill, continuous hairline base */
+.cmd-tl__prov--obs { background: var(--pv); border-bottom: 1px solid var(--pv-ln); }
+/* forecast — 45° hatch, 1px line every 4px, same tone as observed.
+   Never tighten past 1/4px: it moirés on operational displays. */
+.cmd-tl__prov--fct { background-image: repeating-linear-gradient(45deg, var(--pv-hatch) 0 1px, transparent 1px 4px); }
+.cmd-tl__prov--fct.is-brk { background-color: color-mix(in srgb, var(--c-alert) 10%, transparent); }
+/* no data — no fill, 1px dotted base line */
+.cmd-tl__prov--nd { background: none; }
+.cmd-tl__prov--nd::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background-image: repeating-linear-gradient(90deg, var(--c-line-strong) 0 1px, transparent 1px 3px); }
+/* Prior-cycle forecast over the past window: a thin dashed trace behind
+   the observed series, so model deviation is readable without a lane of
+   its own. Applied to an SVG path drawn before the series path. */
+.cmd-tl__ghost { fill: none; stroke: var(--c-fg-subtle); stroke-width: 1; stroke-dasharray: 2 2; opacity: 0.55; }
+
+/* the scrub surface spans all lanes */
+.cmd-tl__field { position: relative; cursor: ew-resize; }
+.cmd-tl__marks { position: absolute; top: 0; bottom: 0; left: 96px; right: 0; pointer-events: none; }
+.cmd-tl__now { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--c-fg); }
+.cmd-tl__now::before { content: "NOW"; position: absolute; top: -1px; left: 3px; font-family: var(--nt-font-mono); font-size: 8px; font-weight: 700; letter-spacing: 0.1em; color: var(--c-fg); }
+.cmd-tl__cursor { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--c-accent); }
+.cmd-tl__cursor::before { content: ""; position: absolute; top: -3px; left: 50%; transform: translateX(-50%); width: 9px; height: 9px; background: var(--c-accent); clip-path: polygon(50% 100%, 0 0, 100% 0); }
+.cmd-tl__ax { display: flex; margin-top: 4px; }
+.cmd-tl__ax-l { width: 96px; flex: none; }
+.cmd-tl__ax-c { flex: 1; display: flex; justify-content: space-between; font-family: var(--nt-font-mono); font-size: 9px; color: var(--c-fg-subtle); }
+.cmd-tl__legend { display: flex; gap: 8px; align-items: center; flex: 0 1 auto; min-width: 0; overflow: hidden; }
+.cmd-tl__legend span { display: flex; align-items: center; gap: 5px; white-space: nowrap; font-family: var(--nt-font-mono); font-size: 9px; color: var(--c-fg-subtle); letter-spacing: 0.04em; }
+.cmd-tl__legend i { width: 12px; height: 8px; display: block; border: 1px solid var(--c-line-strong); }
+/* the three provenance states, same patterns as the lanes */
+.cmd-tl__legend i.cmd-tl__sw--obs { background: var(--c-surface-2); }
+.cmd-tl__legend i.cmd-tl__sw--fct { border-color: var(--c-line); background-image: repeating-linear-gradient(45deg, var(--c-line-strong) 0 1px, transparent 1px 4px); }
+.cmd-tl__legend i.cmd-tl__sw--nd { border: none; border-bottom: 1px dotted var(--c-line-strong); }
+.cmd-tl__legend i.cmd-tl__sw--brk { border-color: var(--c-alert); background: color-mix(in srgb, var(--c-alert) 30%, transparent); }
+
+/* alert blocks inside the alert lane */
+.cmd-tl__blk { position: absolute; top: 6px; bottom: 6px; border: 1px solid var(--sv, var(--c-fg-subtle)); background: color-mix(in srgb, var(--sv, #888) 22%, transparent); cursor: pointer; overflow: hidden; }
+.cmd-tl__blk:hover { background: color-mix(in srgb, var(--sv, #888) 38%, transparent); }
+.cmd-tl__blk span { position: absolute; left: 3px; top: 50%; transform: translateY(-50%); font-family: var(--nt-font-mono); font-size: 8.5px; font-weight: 600; color: var(--c-fg); white-space: nowrap; }
+
+@media (max-width: 1280px) {
+  .cmd-panel--l, .cmd-panel--r { width: 300px; }
+  .cmd-tl__lane-l { width: 84px; }
+}
+/* Secondary map furniture yields first on narrow displays. Target ops
+   resolution is >=1600px wide; below that the legends fold away. */
+@media (max-width: 1560px) { .cmd-hud--bl > .cmd-hud__row:first-child { display: none; } }
+
+/* ============================================================
+   Project extensions — not in the canon.
+   The kit draws its map bed as an inline SVG; here it hosts a live
+   MapLibre canvas, and the surface has to coexist with the console's
+   own routing and theming.
+   ============================================================ */
+
+/* MapLibre replaces the kit's inline SVG basemap. */
+.cmd__map .maplibregl-canvas-container,
+.cmd__map .maplibregl-canvas { height: 100%; width: 100%; }
+.cmd__map .maplibregl-ctrl-attrib {
+  background: color-mix(in srgb, var(--c-surface) 80%, transparent);
+  border-radius: var(--c-radius);
+  color: var(--c-fg-subtle);
+  font-family: var(--nt-font-ui);
+  font-size: 9px;
+}
+.cmd__map .maplibregl-ctrl-attrib a { color: var(--c-fg-subtle); }
+
+/* The view owns the viewport, so nothing behind it may scroll. */
+.cmd-host { overflow: hidden; }
+
+/* Series path drawn over the provenance bands. */
+.cmd-tl__series { fill: none; stroke: var(--c-fg-muted); stroke-width: 1.25; stroke-linejoin: round; }
+.cmd-tl__series--brk { stroke: var(--c-alert); }
+/* Operational threshold, per the canon's dashed rule. */
+.cmd-tl__thr { stroke: var(--c-line-strong); stroke-width: 1; stroke-dasharray: 3 3; }
+
+/* Illumination strip: a real, legended variable, so the warm-to-cold
+   ramp is allowed here. Day / civil twilight / night. */
+.cmd-tl__illum { position: absolute; inset: 0; display: flex; z-index: 0; }
+.cmd-tl__illum i { display: block; height: 100%; }
+.cmd-tl__illum i[data-phase="day"] { background: color-mix(in srgb, var(--nt-color-yellow) 34%, transparent); }
+.cmd-tl__illum i[data-phase="twilight"] { background: color-mix(in srgb, var(--nt-color-orange) 24%, transparent); }
+.cmd-tl__illum i[data-phase="night"] { background: color-mix(in srgb, var(--c-bg) 70%, transparent); }
+
+/* Empty and loading states inside a panel body. */
+.cmd-empty {
+  font-family: var(--nt-font-mono);
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--c-fg-subtle);
+  padding: 6px 2px;
+}
+
+/* Leaving the command surface back to the console. */
+.cmd__exit { margin-left: 2px; }

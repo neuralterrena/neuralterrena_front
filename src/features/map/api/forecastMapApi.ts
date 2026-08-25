@@ -110,6 +110,52 @@ export async function getWindField(baseUrl: string, model: ForecastModelId, run:
   return json<WindField>(endpoint(baseUrl, `v1/models/${modelPath(model)}/map-wind/${encodeURIComponent(run)}/${hour}.json`), baseUrl, signal);
 }
 
+export interface PointSeries {
+  /** One value per forecast hour, aligned with `hours`. Null where absent. */
+  values: (number | null)[];
+  hours: number[];
+}
+
+interface TiTilerPoint {
+  band_names: string[];
+  coordinates: [number, number];
+  values: (number | null)[];
+}
+
+/**
+ * Values of one variable through the whole run at a single point.
+ *
+ * The endpoint returns one band per step of the unselected dimension, so
+ * leaving `forecast_hour` out of `sel` yields the series. The bands are zipped
+ * against the run's own hour list by index rather than by parsing band names,
+ * which are an implementation detail of the tiler; a length mismatch means the
+ * assumption no longer holds and is reported instead of being guessed at.
+ */
+export async function getPointSeries(
+  baseUrl: string,
+  model: ForecastModelId,
+  run: string,
+  variable: ForecastLayer,
+  point: { lat: number; lng: number },
+  hours: number[],
+  signal?: AbortSignal,
+): Promise<PointSeries> {
+  const url = new URL(
+    `v1/models/${modelPath(model)}/zarr/point/${String(point.lng)},${String(point.lat)}`,
+    `${baseUrl}/`,
+  );
+  url.searchParams.set("run", run);
+  url.searchParams.set("variable", variable);
+
+  const payload = await json<TiTilerPoint>(url.toString(), baseUrl, signal);
+
+  if (payload.values.length !== hours.length) {
+    throw new ForecastHubError();
+  }
+
+  return { hours, values: payload.values };
+}
+
 export function buildRasterTileUrl(baseUrl: string, model: ForecastModelId, run: string, variable: ForecastLayer, hour: number, range: RasterRange, palette: string) {
   const url = new URL(`v1/models/${modelPath(model)}/zarr/tiles/WebMercatorQuad/{z}/{x}/{y}.png`, `${baseUrl}/`);
   url.searchParams.set("run", run);
