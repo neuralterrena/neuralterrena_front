@@ -26,6 +26,7 @@ const renderTimeline = (overrides: Partial<Parameters<typeof CommandTimeline>[0]
   render(
     <LanguageProvider>
       <CommandTimeline
+        alerts={[]}
         bands={BANDS}
         hours={HOURS}
         isCollapsed={false}

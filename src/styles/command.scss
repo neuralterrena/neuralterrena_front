@@ -498,3 +498,38 @@
 
 /* Leaving the command surface back to the console. */
 .cmd__exit { margin-left: 2px; }
+
+/* The canon's `.cmd-expr` is a read-only expression. The rule editor writes
+   into that same sentence, so its controls have to sit inline inside it
+   instead of taking a line each. */
+.cmd-expr select,
+.cmd-expr input {
+  background: var(--c-surface-3);
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--c-radius);
+  color: var(--c-fg);
+  font: inherit;
+  padding: 1px 4px;
+  vertical-align: baseline;
+}
+.cmd-expr select { appearance: auto; }
+.cmd-expr input[type="number"] { width: 58px; }
+.cmd-expr input:focus-visible,
+.cmd-expr select:focus-visible { outline: 1px solid var(--c-accent); outline-offset: 1px; }
+/* The action is a sentence of its own, not a slot in the expression. */
+.cmd-expr input[type="text"] {
+  display: block;
+  width: 100%;
+  margin-top: 5px;
+}
+.cmd-expr input::placeholder { color: var(--c-fg-subtle); }
+.cmd-btn[disabled] {
+  background: var(--c-surface-3);
+  border-color: var(--c-line-strong);
+  color: var(--c-fg-subtle);
+  cursor: not-allowed;
+}
+.cmd-btn[disabled]:hover { filter: none; }
+
+/* Rule rows stack their expression under the row, so they need the gap. */
+.cmd-sec .cmd-sec { gap: 5px; }

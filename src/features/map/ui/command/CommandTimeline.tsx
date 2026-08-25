@@ -9,12 +9,15 @@ import {
   thresholdY,
   type LaneSample,
 } from "../../model/commandLanes";
+import type { CommandAlert } from "../../model/commandRules";
 import type { LaneSeries } from "../../model/useCommandData";
 import type { IlluminationBand } from "../../model/solar";
 
 const LANE_HEIGHT = 30;
 
 interface CommandTimelineProps {
+  /** Predicted rule triggers, drawn as blocks on their own lane. */
+  alerts: readonly CommandAlert[];
   bands: IlluminationBand[];
   hours: number[];
   isCollapsed: boolean;
@@ -41,6 +44,7 @@ const percent = (value: number) => `${(value * 100).toFixed(3)}%`;
  * the present instant and never doubles as the boundary between the two.
  */
 export function CommandTimeline({
+  alerts,
   bands,
   hours,
   isCollapsed,
@@ -229,6 +233,36 @@ export function CommandTimeline({
                 </div>
               );
             })}
+            <div className="cmd-tl__lane">
+              <div className="cmd-tl__lane-l">
+                <span className="cmd-tl__lane-n">{t("command.laneAlerts")}</span>
+                <span className="cmd-tl__lane-s">{t("command.sourceRules")}</span>
+              </div>
+              <div className="cmd-tl__lane-c">
+                {alerts.map((alert) => (
+                  <button
+                    className={`cmd-tl__blk cmd-sev--${alert.trigger.severity}`}
+                    key={alert.rule.id}
+                    onClick={(event) => {
+                      // The lane sits on the scrub surface; jumping to the
+                      // block must not also scrub to where it was clicked.
+                      event.stopPropagation();
+                      onHourChange(alert.trigger.startHour);
+                    }}
+                    onPointerDown={(event) => event.stopPropagation()}
+                    style={{
+                      left: percent(position(alert.trigger.startHour)),
+                      // A single-hour window still needs to be clickable.
+                      width: `max(14px, ${percent(Math.max(0, position(alert.trigger.endHour) - position(alert.trigger.startHour)))})`,
+                    }}
+                    title={alert.rule.action}
+                    type="button"
+                  >
+                    <span>{t(alert.lane.labelKey)}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div aria-hidden="true" className="cmd-tl__marks">

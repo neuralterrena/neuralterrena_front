@@ -1,10 +1,11 @@
-import { Eye, Layers3, Gauge, PanelLeftClose, RotateCw } from "lucide-react";
+import { Bell, Eye, Layers3, Gauge, PanelLeftClose, RotateCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Map } from "maplibre-gl";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/shared/providers";
 import { buildRasterTileUrl, type ForecastLayer } from "../../api/forecastMapApi";
 import { COMMAND_LANES, isBreach } from "../../model/commandLanes";
+import { activeAlerts, commandRuleStore, type CommandRule } from "../../model/commandRules";
 import { readMapConfiguration } from "../../model/config";
 import { formatCoordinate } from "../../model/coordinates";
 import { scaleBarStep } from "../../model/geodesy";
@@ -13,12 +14,14 @@ import { illuminationBands } from "../../model/solar";
 import { useCommandRun, useCommandSeries } from "../../model/useCommandData";
 import { useMapView } from "../../model/useMapView";
 import { MapLibreViewport } from "../MapLibreViewport";
+import { CommandAlerts, CommandBanner } from "./CommandAlerts";
+import { CommandRules } from "./CommandRules";
 import { CommandTimeline } from "./CommandTimeline";
 import { CommandTopStrip, type CommandMode } from "./CommandTopStrip";
 
 const configuration = readMapConfiguration();
 
-type ModuleId = "forecast" | "readouts";
+type ModuleId = "forecast" | "rules";
 
 /**
  * Command view — the map-centric operations surface.
@@ -33,6 +36,8 @@ export function CommandView() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<CommandMode>("mil");
   const [activeModule, setActiveModule] = useState<ModuleId | null>("forecast");
+  const [rules, setRules] = useState<CommandRule[]>(() => commandRuleStore.read());
+  const [dismissedAlertId, setDismissedAlertId] = useState<string | null>(null);
   const [showReadouts, setShowReadouts] = useState(true);
   const [isClear, setIsClear] = useState(false);
   const [isTimelineCollapsed, setIsTimelineCollapsed] = useState(false);
@@ -152,7 +157,29 @@ export function CommandView() {
     return () => document.body.classList.remove("cmd-host");
   }, []);
 
-  const timelineHeight = isTimelineCollapsed ? 42 : 42 + (COMMAND_LANES.length + 1) * 30 + 26;
+  const updateRules = useCallback((next: CommandRule[]) => {
+    setRules(next);
+    commandRuleStore.write(next);
+  }, []);
+
+  const place = formatCoordinate(centre, 2);
+  const alerts = useMemo(
+    () =>
+      activeAlerts(
+        rules,
+        COMMAND_LANES,
+        (laneId) => seriesState.series.find((entry) => entry.laneId === laneId)?.samples ?? [],
+        nowHour,
+      ),
+    [nowHour, rules, seriesState.series],
+  );
+  // Only a window that is already running fills the banner red.
+  const banner = alerts.find(
+    (alert) => alert.trigger.severity === "critical" && alert.rule.id !== dismissedAlertId,
+  );
+  const armedCount = alerts.length;
+
+  const timelineHeight = isTimelineCollapsed ? 42 : 42 + (COMMAND_LANES.length + 2) * 30 + 26;
   const scale = view ? scaleBarStep(view.metersPerPixel, 90) : null;
 
   return (
@@ -188,6 +215,14 @@ export function CommandView() {
           timeState={timeState}
         />
 
+        {banner ? (
+          <CommandBanner
+            alert={banner}
+            onDismiss={() => setDismissedAlertId(banner.rule.id)}
+            onSelect={setHour}
+          />
+        ) : null}
+
         <nav aria-label={t("command.modules")} className="cmd__rail">
           <button
             aria-pressed={activeModule === "forecast"}
@@ -197,6 +232,16 @@ export function CommandView() {
             type="button"
           >
             <Layers3 aria-hidden="true" strokeWidth={1.5} />
+          </button>
+          <button
+            aria-pressed={activeModule === "rules"}
+            className={activeModule === "rules" ? "cmd__railbtn is-on" : "cmd__railbtn"}
+            onClick={() => setActiveModule((current) => (current === "rules" ? null : "rules"))}
+            title={t("command.moduleAlerts")}
+            type="button"
+          >
+            <Bell aria-hidden="true" strokeWidth={1.5} />
+            {armedCount > 0 ? <b>{armedCount}</b> : null}
           </button>
           <button
             aria-pressed={showReadouts}
@@ -290,6 +335,31 @@ export function CommandView() {
           </section>
         ) : null}
 
+        {activeModule === "rules" ? (
+          <section aria-label={t("command.moduleAlerts")} className="cmd-panel cmd-panel--l">
+            <header className="cmd-panel__hd">
+              <Bell aria-hidden="true" strokeWidth={1.5} />
+              <span className="cmd-panel__t">{t("command.moduleAlerts")}</span>
+              <span className="cmd-panel__n">{armedCount}</span>
+            </header>
+            <div className="cmd-panel__bd">
+              <CommandAlerts alerts={alerts} onSelect={setHour} place={place} />
+              <div aria-hidden="true" className="cmd-rule-line" />
+              <CommandRules
+                onAdd={(draft) =>
+                  updateRules([...rules, { ...draft, id: `${draft.laneId}-${String(rules.length + 1)}` }])
+                }
+                onRemove={(id) => updateRules(rules.filter((entry) => entry.id !== id))}
+                onToggle={(id) =>
+                  updateRules(rules.map((entry) => (entry.id === id ? { ...entry, armed: !entry.armed } : entry)))
+                }
+                place={place}
+                rules={rules}
+              />
+            </div>
+          </section>
+        ) : null}
+
         {showReadouts ? (
           <section aria-label={t("command.moduleReadouts")} className="cmd-panel cmd-panel--r">
             <header className="cmd-panel__hd">
@@ -364,6 +434,7 @@ export function CommandView() {
         </div>
 
         <CommandTimeline
+          alerts={alerts}
           bands={bands}
           hours={hours}
           isCollapsed={isTimelineCollapsed}

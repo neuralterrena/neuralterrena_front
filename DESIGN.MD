@@ -165,6 +165,12 @@ En la procedencia **no se gasta color**: queda reservado a severidad, y el rojo 
 
 **Carriles y variables.** El canon propone visibilidad, viento, T−Td, cobertura LOS y techo; el Forecast Hub solo tiene viento. Los carriles son las variables que existen de verdad: viento, temperatura 2 m, inversión térmica y precipitación, más la franja de iluminación, que es astronomía y no necesita backend. Los umbrales operativos de `commandLanes.ts` son **provisionales** y deben revisarse con quien posee el procedimiento antes de usarse para decidir.
 
+**Alertas y reglas.** Una regla es un predicado sobre la serie de previsión y se lee como una frase: `CUANDO <variable> <operador> <valor> DURANTE ≥ <horas> EN <punto>`. El canon usa zonas (`IN Z-03`); aquí no existen, así que la regla se evalúa donde se muestrea la serie —el centro del mapa— y lo dice, en vez de implicar zonas que no hay.
+
+La severidad **se deriva de la antelación**, no se elige: `critical` solo cuando la ventana ya está corriendo, `warning` hasta 6 h, `advisory` más allá. Así el rojo se gasta únicamente en lo que ya está ocurriendo, y el banner rojo —la única superficie rellena de rojo del sistema— no aparece por algo que pasará pasado mañana.
+
+Cada alerta responde a las cuatro preguntas del canon: **cuándo** (ventana y antelación), **con qué confianza** (pico alcanzado y cuánto rebasa el límite), **dónde** (el punto) y **qué hacer** (texto que aporta el operador al crear la regla; el sistema no lo inventa). Las reglas se guardan en `localStorage` a través de `commandRuleStore`; los componentes nunca tocan el almacenamiento.
+
 **Hoy no hay observación.** El Hub no expone ningún endpoint de estaciones, así que todos los carriles se pintan como previstos y el eyebrow dice `MODELO`. El timeline afirma la verdad. Cuando exista fuente de estaciones, esas muestras pasan a `obs` y se dibujan sólidas sin rediseñar nada.
 
 ### Terrain Intelligence — pendiente
