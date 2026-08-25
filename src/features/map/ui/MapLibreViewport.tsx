@@ -1,9 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PropsWithChildren } from "react";
 import {
   type ErrorEvent,
-  type IControl,
   Map,
-  NavigationControl,
   setWorkerUrl,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -14,7 +12,7 @@ import type { WindField } from "../api/forecastMapApi";
 import { WindParticles } from "./WindParticles";
 import { authService } from "../../auth/model/authService";
 import { apiClient } from "../../auth/api/apiClient";
-import { useLanguage } from "@/shared/providers";
+import { useLanguage, useTheme } from "@/shared/providers";
 
 const FORECAST_SOURCE_ID_PREFIX = "forecast-raster-";
 const FORECAST_LAYER_ID_PREFIX = "forecast-raster-layer-";
@@ -91,64 +89,21 @@ function addOrographyLayer(map: Map) {
   });
 }
 
-interface ForecastPanelControlState {
-  ariaLabel: string;
-  isOpen: boolean;
-  label: string;
-  onToggle: () => void;
-}
-
-class ForecastPanelControl implements IControl {
-  private button: HTMLButtonElement | null = null;
-  private container: HTMLDivElement | null = null;
-  private label: HTMLSpanElement | null = null;
-
-  constructor(private state: ForecastPanelControlState) {}
-
-  onAdd(): HTMLElement {
-    const container = document.createElement("div");
-    container.className = "maplibregl-ctrl maplibregl-ctrl-group forecast-map-control";
-    const button = document.createElement("button");
-    button.className = "forecast-map-control__button";
-    button.type = "button";
-    button.innerHTML = "<svg aria-hidden=\"true\" fill=\"none\" viewBox=\"0 0 24 24\"><path d=\"m12 3-8 4 8 4 8-4-8-4Zm-8 9 8 4 8-4M4 17l8 4 8-4\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.75\" /></svg>";
-    button.addEventListener("click", () => this.state.onToggle());
-    const label = document.createElement("span");
-    label.className = "forecast-map-control__label";
-    label.setAttribute("aria-hidden", "true");
-    container.append(label, button);
-    this.button = button;
-    this.container = container;
-    this.label = label;
-    this.update(this.state);
-    return container;
-  }
-
-  onRemove(): void {
-    this.container?.remove();
-    this.button = null;
-    this.container = null;
-    this.label = null;
-  }
-
-  update(state: ForecastPanelControlState) {
-    this.state = state;
-    this.button?.setAttribute("aria-expanded", String(state.isOpen));
-    this.button?.setAttribute("aria-label", state.ariaLabel);
-    this.button?.setAttribute("title", state.ariaLabel);
-    if (this.label) this.label.textContent = state.label;
-  }
-}
-
 interface MapLibreViewportProps {
+  /** Style URL of the selected basemap; changing it reloads the map style. */
+  basemapStyleUrl: string;
+  compact: boolean;
   configuration: MapConfiguration;
-  forecastPanelAriaLabel: string;
-  forecastPanelLabel: string;
-  forecastPanelOpen: boolean;
   flat: boolean;
-  onForecastPanelToggle: () => void;
   projection: MapProjection;
   onError: (message: string) => void;
+  onMapReady: (map: Map | null) => void;
+  /**
+   * Fired once a new style has finished loading. Reloading a style discards
+   * every custom source and layer, so consumers that draw on the map need the
+   * signal to put their own layers back.
+   */
+  onStyleReload: () => void;
   rasterUrl: string | null;
   rasterUrls: string[];
   windField: WindField | null;
@@ -156,20 +111,22 @@ interface MapLibreViewportProps {
 }
 
 export function MapLibreViewport({
+  basemapStyleUrl,
+  children,
+  compact,
   configuration,
-  forecastPanelAriaLabel,
-  forecastPanelLabel,
-  forecastPanelOpen,
   flat,
-  onForecastPanelToggle,
   projection,
   onError,
+  onMapReady,
+  onStyleReload,
   rasterUrl,
   rasterUrls,
   windField,
   windMode,
-}: MapLibreViewportProps) {
+}: PropsWithChildren<MapLibreViewportProps>) {
   const { t } = useLanguage();
+  const { resolvedTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
   const onErrorRef = useRef(onError);
@@ -177,14 +134,13 @@ export function MapLibreViewport({
   const prefetchedTileUrlsRef = useRef(new Set<string>());
   const activeRasterSlotRef = useRef<number | null>(null);
   const rasterRemovalTimersRef = useRef(new globalThis.Map<number, number>());
-  const forecastPanelControlRef = useRef<ForecastPanelControl | null>(null);
-  const forecastPanelStateRef = useRef<ForecastPanelControlState>({
-    ariaLabel: forecastPanelAriaLabel,
-    isOpen: forecastPanelOpen,
-    label: forecastPanelLabel,
-    onToggle: onForecastPanelToggle,
-  });
+  const appliedStyleUrlRef = useRef(basemapStyleUrl);
+  const onMapReadyRef = useRef(onMapReady);
+  const onStyleReloadRef = useRef(onStyleReload);
   const [mapInstance, setMapInstance] = useState<Map | null>(null);
+  // Bumped whenever the style is replaced, so every effect that owns a custom
+  // source re-applies it onto the new style.
+  const [styleEpoch, setStyleEpoch] = useState(0);
 
   useEffect(() => {
     onErrorRef.current = onError;
@@ -195,15 +151,9 @@ export function MapLibreViewport({
   }, [t]);
 
   useEffect(() => {
-    const state = {
-      ariaLabel: forecastPanelAriaLabel,
-      isOpen: forecastPanelOpen,
-      label: forecastPanelLabel,
-      onToggle: onForecastPanelToggle,
-    };
-    forecastPanelStateRef.current = state;
-    forecastPanelControlRef.current?.update(state);
-  }, [forecastPanelAriaLabel, forecastPanelLabel, forecastPanelOpen, onForecastPanelToggle]);
+    onMapReadyRef.current = onMapReady;
+    onStyleReloadRef.current = onStyleReload;
+  }, [onMapReady, onStyleReload]);
 
   useEffect(() => () => {
     rasterRemovalTimersRef.current.forEach((timer) => window.clearTimeout(timer));
@@ -230,11 +180,6 @@ export function MapLibreViewport({
       },
       zoom: configuration.initialView.zoom,
     });
-    const navigation = new NavigationControl({ showCompass: true, showZoom: true });
-    map.addControl(navigation, "top-right");
-    const forecastPanelControl = new ForecastPanelControl(forecastPanelStateRef.current);
-    map.addControl(forecastPanelControl, "top-right");
-    forecastPanelControlRef.current = forecastPanelControl;
     map.once("load", () => addOrographyLayer(map));
     map.on("error", (event: ErrorEvent) => {
       const message = event.error?.message || translateRef.current("map.styleLoadError");
@@ -242,14 +187,42 @@ export function MapLibreViewport({
     });
     mapRef.current = map;
     setMapInstance(map);
+    onMapReadyRef.current(map);
 
     return () => {
       map.remove();
       mapRef.current = null;
-      forecastPanelControlRef.current = null;
       setMapInstance(null);
+      onMapReadyRef.current(null);
     };
   }, [configuration.forecastHubApiBaseUrl, configuration.initialView.center, configuration.initialView.zoom, configuration.styleUrl]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || map.getStyle()?.name === undefined) {
+      return undefined;
+    }
+
+    // The first style is set in the constructor; only react to later changes.
+    if (appliedStyleUrlRef.current === basemapStyleUrl) {
+      return undefined;
+    }
+    appliedStyleUrlRef.current = basemapStyleUrl;
+
+    const handleReady = () => {
+      // Every custom source went with the old style.
+      activeRasterSlotRef.current = null;
+      setStyleEpoch((epoch) => epoch + 1);
+      onStyleReloadRef.current();
+    };
+
+    map.setStyle(basemapStyleUrl);
+    map.once("idle", handleReady);
+
+    return () => {
+      map.off("idle", handleReady);
+    };
+  }, [basemapStyleUrl]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -270,7 +243,7 @@ export function MapLibreViewport({
     return () => {
       map.off("load", applyProjection);
     };
-  }, [projection]);
+  }, [projection, styleEpoch]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -298,7 +271,7 @@ export function MapLibreViewport({
     return () => {
       map.off("load", applyTerrain);
     };
-  }, [flat]);
+  }, [flat, styleEpoch]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -378,7 +351,22 @@ export function MapLibreViewport({
     return () => {
       map.off("load", updateRasterLayer);
     };
-  }, [mapInstance, rasterUrl]);
+  }, [mapInstance, rasterUrl, styleEpoch]);
 
-  return <div aria-label={t("map.interactiveMap")} className="map-viewport" ref={containerRef} role="application">{windField ? <WindParticles field={windField} map={mapInstance} mode={windMode} /> : null}</div>;
+  return (
+    <div
+      className={compact ? "nt-map nt-map--bleed nt-map--mobile" : "nt-map nt-map--bleed"}
+      data-btn="elevated"
+      data-theme={resolvedTheme}
+    >
+      <div
+        aria-label={t("map.interactiveMap")}
+        className="nt-map__canvas"
+        ref={containerRef}
+        role="application"
+      />
+      {windField ? <WindParticles field={windField} map={mapInstance} mode={windMode} /> : null}
+      <div className="nt-map__overlay">{children}</div>
+    </div>
+  );
 }

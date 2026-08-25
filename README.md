@@ -65,6 +65,9 @@ VITE_API_BASE_URL=https://api.example.com
 VITE_AUTH_LOGIN_PATH=/auth/login
 VITE_AUTH_REFRESH_PATH=/auth/refresh
 VITE_FORECAST_HUB_API_BASE_URL=https://forecast.example.com
+VITE_MAP_STYLE_TERRAIN_URL=
+VITE_MAP_STYLE_SATELLITE_URL=
+VITE_MAP_STYLE_DARK_URL=
 ```
 
 La gestión de tokens funciona así:

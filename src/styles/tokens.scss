@@ -1,3 +1,13 @@
+// Neural Terrena — design tokens.
+// Port of `colors_and_type.css` from the Neural Terrena Design System
+// (Claude Design, canon August 2026). Token prefix: --nt-*.
+//
+// Rules that live in DESIGN.MD and are encoded here:
+//   - Five active colours. Red is alert only. Blue is the only CTA colour.
+//   - Radii default to 0 or 4px. Borders are preferred over shadows.
+//   - Motion is restrained: 120/200/300ms on a quiet ease-out.
+
+// ----- UI font: Inter, served locally (variable 100–900) -----
 @font-face {
   font-display: swap;
   font-family: "Inter";
@@ -18,32 +28,106 @@
     url("/fonts/Inter-Italic-VariableFont_opsz_wght.ttf") format("truetype");
 }
 
+// The canon serves JetBrains Mono locally for coordinates, tabular data and
+// metric readouts. The .ttf files are not in public/fonts/ yet, so no
+// @font-face is declared: --nt-font-mono names it first and falls back to the
+// system mono stack until the files are dropped in.
+// Needed: JetBrainsMono-{Regular,Medium,SemiBold,Bold}.ttf (+ italics).
+//
+// Helvetica ("Helvetica NT", --nt-font-brand) is deliberately absent: the canon
+// forbids shipping it on the web. It stays in print/pitch surfaces only.
+
 :root {
-  --nt-color-yellow: #f9b233;
-  --nt-color-orange: #e85d2f;
-  --nt-color-red: #c62828;
-  --nt-color-blue: #1e4f82;
-  --nt-color-black: #1a1a1a;
+  // ===== Palette — 5 active colours, no others =====
+  --nt-color-yellow: #f9b233; // Layer 1 · high illumination
+  --nt-color-orange: #e85d2f; // Layer 2 · mid temperature
+  --nt-color-red: #c62828; // Layer 3 · alert · error · risk (reserved)
+  --nt-color-blue: #1e4f82; // Layer 4 · institutional · primary CTA
+  --nt-color-black: #1a1a1a; // Text · wordmark · dark surfaces
   --nt-color-white: #ffffff;
 
-  --nt-gray-100: #dadada;
-  --nt-gray-300: #b2b2b2;
-  --nt-gray-500: #878787;
-  --nt-gray-700: #3c3c3b;
-  --nt-gray-900: #1a1a1a;
+  // ===== Stratigraphic grayscale — one stop per colour band =====
+  --nt-gray-100: #dadada; // ↔ yellow
+  --nt-gray-300: #b2b2b2; // ↔ orange
+  --nt-gray-500: #878787; // ↔ red
+  --nt-gray-700: #3c3c3b; // ↔ blue
+  --nt-gray-900: #1a1a1a; // ↔ black
 
+  // ===== Semantic — light =====
   --nt-bg: var(--nt-color-white);
   --nt-bg-subtle: #f6f6f6;
   --nt-surface: var(--nt-color-white);
-  --nt-surface-strong: #ffffff;
   --nt-fg: var(--nt-color-black);
   --nt-fg-muted: var(--nt-gray-700);
   --nt-fg-subtle: var(--nt-gray-500);
   --nt-border: var(--nt-gray-100);
   --nt-border-strong: var(--nt-gray-300);
+
   --nt-cta-primary-bg: var(--nt-color-blue);
   --nt-cta-primary-fg: var(--nt-color-white);
-  --nt-cta-primary-hover: #163e68;
+  --nt-cta-primary-hover: #163e68; // blue darkened ~12%
+
+  --nt-alert: var(--nt-color-red);
+  --nt-warning: var(--nt-color-orange);
+  --nt-info: var(--nt-color-blue);
+
+  // ===== Type families =====
+  --nt-font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --nt-font-mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+
+  // ===== Modular type scale (16px base, ratio ~1.25) =====
+  --nt-text-xs: 12px;
+  --nt-text-sm: 14px;
+  --nt-text-base: 16px;
+  --nt-text-lg: 18px;
+  --nt-text-xl: 20px;
+  --nt-text-2xl: 24px;
+  --nt-text-3xl: 32px;
+  --nt-text-4xl: 40px;
+  --nt-text-5xl: 56px;
+  --nt-text-6xl: 72px;
+
+  // ===== Spacing — 8px base. The 4px sub-step is for dense product UI only =====
+  --nt-space-half: 4px;
+  --nt-space-1: 8px;
+  --nt-space-2: 16px;
+  --nt-space-3: 24px;
+  --nt-space-4: 32px;
+  --nt-space-6: 48px;
+  --nt-space-8: 64px;
+  --nt-space-12: 96px;
+  --nt-space-16: 128px;
+
+  // ===== Container widths =====
+  --nt-container-prose: 720px;
+  --nt-container-content: 1080px;
+  --nt-container-wide: 1280px;
+  --nt-container-max: 1440px;
+
+  // ===== Radii — default to 0 or 4px =====
+  --nt-radius-none: 0;
+  --nt-radius-sm: 2px;
+  --nt-radius-md: 4px;
+  --nt-radius-lg: 8px;
+  --nt-radius-full: 9999px;
+
+  // ===== Elevation — subtle only, never blur > 20px =====
+  --nt-shadow-color: rgba(26, 26, 26, 0.08);
+  --nt-shadow-none: none;
+  --nt-shadow-sm: 0 1px 2px rgba(26, 26, 26, 0.06);
+  --nt-shadow-md: 0 4px 8px var(--nt-shadow-color);
+  --nt-shadow-lg: 0 8px 16px rgba(26, 26, 26, 0.1);
+
+  // ===== Motion =====
+  --nt-ease: cubic-bezier(0.2, 0.7, 0.2, 1); // quiet ease-out
+  --nt-dur-fast: 120ms;
+  --nt-dur-base: 200ms;
+  --nt-dur-slow: 300ms;
+
+  // ===== Project extensions =====
+  // Not in the canon: surfaces this console needs that the design system does
+  // not name. Keep them derived from canon tokens.
+  --nt-surface-strong: #ffffff;
   --nt-overlay-soft: rgba(255, 255, 255, 0.08);
   --nt-overlay-border: rgba(255, 255, 255, 0.16);
   --nt-overlay-text: var(--nt-gray-100);
@@ -53,59 +137,37 @@
     linear-gradient(135deg, rgba(255, 255, 255, 0.03), transparent 40%),
     var(--nt-color-black);
   --nt-hero-fg: var(--nt-color-white);
-  --nt-shadow-color: rgba(26, 26, 26, 0.08);
-
-  --nt-font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --nt-font-mono: "SF Mono", Menlo, Consolas, monospace;
-
-  --nt-text-xs: 12px;
-  --nt-text-sm: 14px;
-  --nt-text-base: 16px;
-  --nt-text-lg: 18px;
-  --nt-text-xl: 20px;
-  --nt-text-2xl: 24px;
-  --nt-text-3xl: 32px;
-  --nt-text-4xl: 40px;
-
-  --nt-space-half: 4px;
-  --nt-space-1: 8px;
-  --nt-space-2: 16px;
-  --nt-space-3: 24px;
-  --nt-space-4: 32px;
-  --nt-space-6: 48px;
-  --nt-space-8: 64px;
-
-  --nt-radius-sm: 2px;
-  --nt-radius-md: 4px;
-  --nt-radius-lg: 8px;
-
-  --nt-shadow-sm: 0 1px 2px rgba(26, 26, 26, 0.06);
-  --nt-shadow-md: 0 4px 8px var(--nt-shadow-color);
-  --nt-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --nt-dur-fast: 120ms;
-  --nt-dur-base: 200ms;
 }
 
+// ===== Dark — canon values =====
 :root[data-theme="dark"] {
-  --nt-bg: #121415;
-  --nt-bg-subtle: #0d0f10;
-  --nt-surface: #171a1d;
-  --nt-surface-strong: #1f2429;
-  --nt-fg: #f3f4f5;
-  --nt-fg-muted: #c0c5cb;
-  --nt-fg-subtle: #8b949e;
-  --nt-border: #2b3138;
-  --nt-border-strong: #4b5560;
+  --nt-bg: var(--nt-color-black);
+  --nt-bg-subtle: #2a2a2a;
+  --nt-surface: #2a2a2a;
+  --nt-fg: var(--nt-color-white);
+  --nt-fg-muted: var(--nt-gray-300);
+  --nt-fg-subtle: var(--nt-gray-500);
+  --nt-border: var(--nt-gray-700);
+  --nt-border-strong: var(--nt-gray-500);
+
+  // Extension: the canon leaves the CTA at #1E4F82 in dark. Kept lighter here
+  // so the primary action stays distinguishable against a near-black shell.
   --nt-cta-primary-bg: #3c7fc4;
   --nt-cta-primary-hover: #5090d4;
+
+  // Extension: canon shadow alphas (6–10%) are invisible on a dark ground.
+  --nt-shadow-color: rgba(0, 0, 0, 0.28);
+  --nt-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.24);
+  --nt-shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.32);
+
+  --nt-surface-strong: #333333;
   --nt-overlay-soft: rgba(255, 255, 255, 0.06);
   --nt-overlay-border: rgba(255, 255, 255, 0.12);
-  --nt-overlay-text: #e6e9ed;
-  --nt-overlay-active-bg: #ffffff;
-  --nt-overlay-active-fg: #111315;
+  --nt-overlay-text: var(--nt-gray-100);
+  --nt-overlay-active-bg: var(--nt-color-white);
+  --nt-overlay-active-fg: var(--nt-color-black);
   --nt-hero-bg:
     linear-gradient(135deg, rgba(255, 255, 255, 0.04), transparent 40%),
-    #08090a;
-  --nt-hero-fg: #f3f4f5;
-  --nt-shadow-color: rgba(0, 0, 0, 0.28);
+    #0d0d0d;
+  --nt-hero-fg: var(--nt-color-white);
 }

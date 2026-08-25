@@ -1,120 +1,194 @@
-# Neural Terrena Console Design
+# Neural Terrena Console — Diseño
 
-Este documento es la referencia de diseño para nuevos desarrollos de la aplicación. Extiende el canon del design system raíz y lo aterriza en una consola de producto: densa, sobria y preparada para operación.
+Referencia de diseño para nuevos desarrollos de la consola. Es la bajada a producto del **Neural Terrena Design System** (canon de agosto de 2026, mantenido en Claude Design).
+
+**Fuente de verdad**
+
+| Qué | Dónde |
+|---|---|
+| Canon completo (marca, voz, componentes) | Neural Terrena Design System · `claude.ai/design/p/db4d5515-1381-43f0-b059-19ed9e6073cb` |
+| Tokens en este repo | `src/styles/tokens.scss` — port de `colors_and_type.css` del canon |
+| Clases semánticas | `src/styles/global.scss` |
+| Convención de features | `docs/FEATURE_CONVENTION.md` |
+
+Si un token cambia en el canon, se cambia en `tokens.scss` y no en las hojas de estilo que lo consumen. Nunca hardcodear colores, tamaños de texto, espaciados, radios, sombras ni duraciones.
 
 ## Principios
 
-- La interfaz debe parecer una herramienta de trabajo, no una landing ni una pieza comercial.
+- La interfaz es una herramienta de trabajo, no una landing ni una pieza comercial.
 - El terreno, la visibilidad, el tiempo y el estado operacional son el centro. La marca acompaña sin gritar.
-- El color comunica estado o jerarquía. No se usa como decoración.
-- Las pantallas deben ser escaneables, con densidad controlada y sin ornamento innecesario.
-- El copy debe ser preciso, sereno y técnico. Evitar hype, claims genéricos y lenguaje SaaS inflado.
+- El color comunica estado o jerarquía. Nunca decora.
+- Densidad controlada, pantallas escaneables, sin ornamento.
+- Si un diseño se siente ruidoso, decorativo o genérico, probablemente está mal. Releer *Anti-patrones* y empezar de nuevo.
 
-## Stack visual
+## Voz
 
-- React con componentes funcionales, TypeScript estricto y composición por features.
-- CSS global con tokens y clases semánticas. Evitar estilos inline salvo para valores dinámicos inevitables.
-- Iconografía con `lucide-react`, trazo `1.5` o `1.75`, sin rellenos ni sombras.
-- Inter local para toda la UI. No usar Helvetica en superficies web o app.
+Habla como un analista con experiencia a otro profesional. Baja la voz, no vende. Verbos concretos: *calcula, modela, sincroniza, expone, traza*. Nunca «revolucionario», «next-gen», «all-in-one», «transformar», «empoderar». Nunca emoji en producto, web, deck o propuestas.
 
-## Tokens base
+- Wordmark siempre en minúscula: `neural terrena`. En texto corrido: `Neural Terrena`.
+- `Terrain Intelligence` en inglés y con mayúscula inicial incluso en prosa española: es una categoría propia.
+- Acrónimos canónicos: `C-UAS` (nunca C-UAV), `HADR`, `CIP`, `LOS`, `DEM`.
+- Idioma de la UI: español técnico-profesional. Todo string pasa por `t()` (`src/shared/i18n/translations.ts`), con `en` y `es` completos.
 
-Los tokens viven en `src/styles/tokens.css` y deben conservar estos valores:
+## Paleta
 
-| Token | Valor | Uso |
-|---|---:|---|
-| `--nt-color-yellow` | `#F9B233` | iluminación, capa cálida, acento grande |
-| `--nt-color-orange` | `#E85D2F` | advertencia, capa intermedia |
-| `--nt-color-red` | `#C62828` | error, riesgo, alerta |
-| `--nt-color-blue` | `#1E4F82` | acción primaria, institución, foco |
-| `--nt-color-black` | `#1A1A1A` | texto, superficies oscuras |
-| `--nt-bg-subtle` | `#F6F6F6` | fondos de app y separadores |
+Cinco colores activos. **El orden es significado** — gradiente estratigráfico cálido arriba → frío abajo, igual que el isotipo.
 
-Reglas:
+| Token | Hex | Rol |
+|---|---|---|
+| `--nt-color-yellow` | `#F9B233` | Capa 1 · iluminación alta |
+| `--nt-color-orange` | `#E85D2F` | Capa 2 · temperatura media |
+| `--nt-color-red` | `#C62828` | **Alerta · error · riesgo — reservado** |
+| `--nt-color-blue` | `#1E4F82` | Institucional · **CTA primario** |
+| `--nt-color-black` | `#1A1A1A` | Texto · wordmark · superficies oscuras |
 
-- Azul es el único color para acciones primarias.
-- Rojo se reserva para errores y estados críticos.
-- Amarillo y naranja no deben usarse como texto pequeño sobre blanco.
-- Máximo tres colores activos por pantalla, además de blanco, negro y grises.
+Escala de grises estratigráfica (`--nt-gray-100 / -300 / -500 / -700 / -900`): un paso por banda, de modo que la jerarquía de capas sobrevive sin color.
 
-## Layout
+Reglas duras:
 
-- Base de espaciado: `8px`.
-- Radios: `0`, `2px`, `4px`, `8px`. El valor por defecto para inputs, botones y cards es `4px`.
-- Cards: fondo blanco, borde `1px` gris, sin sombra por defecto.
-- No anidar cards dentro de cards.
-- Las vistas operativas usan barras laterales, cabeceras compactas, tablas, paneles y listas. Evitar heroes.
-- En móvil, las herramientas se apilan sin ocultar acciones principales.
+1. **El color es señal, no decoración.** Máximo tres colores activos por composición, más blanco y negro.
+2. **El rojo es solo alerta.** Avisos críticos, errores, estados de riesgo. Nunca rojo para enfatizar, nunca un botón rojo.
+3. **El azul es el único color de CTA.** Hover oscurece a `--nt-cta-primary-hover` (`#163E68`). No hay CTA verdes ni naranjas.
+4. **Amarillo y naranja no pasan WCAG AA sobre blanco a tamaño de texto.** Solo sobre bloques rellenos con texto oscuro, en data viz o como acento display.
+5. **El gradiente cálido→frío solo aparece cuando representa algo** — iluminación, altitud, temperatura, exposición — y siempre con leyenda. El orden nunca se invierte.
+
+## Tipografía
+
+Tres familias con separación estricta de rol:
+
+| Token | Familia | Uso |
+|---|---|---|
+| `--nt-font-brand` | Helvetica NT | **Solo marca y print/pitch.** Nunca en web — no se sirve desde este repo. |
+| `--nt-font-ui` | Inter (local, variable 100–900) | Toda la superficie digital. |
+| `--nt-font-mono` | JetBrains Mono | Código, coordenadas, datos tabulares, lecturas de métricas. |
+
+Escala modular, base 16 px, ratio ~1.25: `xs 12 · sm 14 · base 16 · lg 18 · xl 20 · 2xl 24 · 3xl 32 · 4xl 40 · 5xl 56 · 6xl 72`.
+
+Titulares en Inter Bold (700) con `letter-spacing` negativo (`-0.015` a `-0.02em`) en tamaños display. Cuerpo en Inter Regular (400), `line-height: 1.6`. Las lecturas mono usan peso 500 para énfasis y `tabular-nums` siempre que haya números que comparar.
+
+> **Pendiente:** JetBrains Mono aún no está en `public/fonts/`. `--nt-font-mono` la nombra primero y cae al mono del sistema. Para activarla hay que añadir `JetBrainsMono-{Regular,Medium,SemiBold,Bold}.ttf` (+ itálicas) y sus `@font-face` en `tokens.scss`.
+
+## Espacio, estructura, superficies
+
+**Escala** — base 8 px, `--nt-space-1: 8` … `--nt-space-16: 128`. El sub-paso de 4 px (`--nt-space-half`) se permite **solo** en UI de producto densa.
+
+**Contenedores** — `--nt-container-prose 720 / content 1080 / wide 1280 / max 1440`. 12 columnas en escritorio, 4 en tablet, apilado en móvil.
+
+**Fondos** — blanco o negro por defecto; `--nt-bg-subtle` (`#F6F6F6`) para cortes de sección. El gradiente estratigráfico solo a baja opacidad y solo como variable con leyenda. Sin fotografía genérica de paisaje, sin gradientes morados o rosas, sin neón, sin patrones ni texturas.
+
+**Bordes antes que sombras.** Separadores de 1 px en `--nt-gray-100`, `--nt-gray-300` cuando hace falta más presencia. La card por defecto es superficie blanca + borde 1 px gray-100 + radio 4 px + sin sombra. Recurrir a `--nt-shadow-sm/md/lg` solo cuando el espacio y el peso tipográfico no bastan; nunca blur > 20 px; nunca sombra sobre iconos o logos. No anidar cards dentro de cards.
+
+**Radios** — `none 0 / sm 2 / md 4 / lg 8 / full 9999`. **Por defecto 0 o 4.** De 12 a 24 px es territorio SaaS de consumo y está fuera de voz. `full` es para avatares y algún badge; nunca para botones ni para «pills» inventadas.
+
+Las vistas operativas usan barras laterales, cabeceras compactas, tablas, paneles y listas. Sin heroes. En móvil las herramientas se apilan sin ocultar acciones principales.
+
+## Movimiento
+
+Contenido. Sin rebotes, sin muelles, sin parallax, sin autoplay.
+
+```
+--nt-dur-fast  120ms
+--nt-dur-base  200ms
+--nt-dur-slow  300ms
+--nt-ease      cubic-bezier(0.2, 0.7, 0.2, 1)
+```
+
+Aceptable: fade-in al hacer scroll, transiciones de color/borde en hover, el scrubber de la línea de tiempo, un único pulso en un marcador de aviso crítico. No aceptable: bucles de hero, Lottie, fondos de partículas, gradientes animados. Respetar `prefers-reduced-motion`.
+
+**Estados de interacción**
+
+| Estado | Tratamiento |
+|---|---|
+| Hover (CTA) | Oscurecer el azul a `#163E68`. Sin escala. |
+| Hover (enlace) | Color → `--nt-cta-primary-hover`, mantener subrayado. |
+| Hover (card) | Borde `gray-100` → `gray-300`. Sin elevación ni cambio de sombra. |
+| Press | Opacidad `.85` brevemente. Sin encoger, sin transform. |
+| Focus | Outline de 2 px en `--nt-color-blue` con 2 px de offset. Nunca se quita. |
+| Disabled | Relleno `--nt-gray-300`, texto `--nt-gray-500`, `cursor: not-allowed`. |
+| Loading | Texto concreto de la acción, p. ej. `Validando`. |
+| Error | Explicar el bloqueo sin culpar al usuario. |
+| Vacío | Indicar el estado del sistema y la siguiente acción disponible. |
+| Éxito | Mostrar el cambio de estado, no celebrarlo. |
 
 ## Componentes
 
-### Botones
+El canon define seis primitivas que codifican reglas del sistema, no solo apariencia:
 
-- Altura recomendada: `44px` o `48px`.
-- Usar icono + texto en acciones importantes.
-- Hover: oscurecer azul a `#163E68`, sin escala ni desplazamiento.
-- Focus visible siempre con outline azul.
+- **Button** — azul institucional como único color de CTA. `primary` / `secondary` (outline) / `tertiary` (texto); tres tamaños. **No hay variante destructiva**: el rojo está reservado a alertas.
+- **SeverityTag** — el canon de severidad hecho componente.
+- **StatReadout** — métrica en mono tabular que lleva su propio límite operativo y se pone en rojo al superarlo.
+- **Meter** — valor sobre un rango, con marca del umbral en la propia pista.
+- **AlertCard** — aviso que responde *qué* / *con qué confianza* / *dónde* / *cuándo* (antelación).
+- **Panel** — contenedor colapsable; colapsa a su barra de cabecera. `tone="dark"` da la superficie de puesto de mando.
 
-### Inputs
+**Regla de severidad:**
 
-- Label visible siempre.
-- Borde gris, fondo blanco, radio `4px`.
-- Error con borde rojo y mensaje breve.
-- Los campos de credenciales usan `autocomplete` correcto.
+> El rojo es el único color de alerta. `critical` puede rellenar en rojo (banner) o llevar borde/punto rojo. `elevated` y `advisory` se quedan neutros y transmiten urgencia por peso, posición y antelación. El gradiente cálido→frío queda reservado a iluminación/insolación, donde representa una variable real y con leyenda.
 
-### Estados
+Por encima de las primitivas, el canon define tres capas de superficie para producto.
 
-- Loading: texto concreto de acción, por ejemplo `Validando`.
-- Error: explicar el bloqueo sin culpar al usuario.
-- Vacío: indicar el estado de sistema y la siguiente acción disponible.
-- Éxito: mostrar el cambio de estado, no celebraciones.
+### Map Controls — implementada
+
+Vive en `src/styles/map-controls.scss` (port de `ui_kits/product/map-controls.css`, seguido de un bloque de extensiones del proyecto claramente separado) y en `src/features/map/ui/controls/`.
+
+- Contenedor `.nt-map` con `data-btn="elevated"` y `data-theme` sincronizado con el tema de la app, y esquinas `--tl/--tr/--bl/--br`.
+- Primitivos: `.nt-mapbtn` (36 px escritorio / 48 px móvil), `.nt-mapgroup`, `.nt-mappanel`, `.nt-maprow`, `.nt-seg`, `.nt-mapscale`, `.nt-mappill`.
+- Controles: zoom, brújula (gira con el rumbo), mi-ubicación, pantalla completa, buscador, basemaps, capas y predicción, medición y ajustes.
+- Móvil (`.nt-map--mobile`): objetivos de 48 px, barra inferior de pestañas y paneles como bottom sheets, con `safe-area`.
+
+Reglas al extenderla:
+
+- No editar el bloque canónico del SCSS: todo lo propio va al bloque de extensiones, comentado con el motivo.
+- Los primitivos que el canon dibuja como contenedores se renderizan como `button` reales para que sean operables con teclado; el reset vive en las extensiones.
+- El único color de estado en los controles sigue siendo el azul de acción; el rojo queda para alertas.
+
+### Terrain Intelligence y Command View — pendientes
+
+Especificadas en el canon con sus hojas `ui_kits/product/ti.css` y `command.css`; **este repo aún no las implementa**. Al abordarlas, seguir sus prefijos de clase (`.nt-ti*`, `.nt-sev*`, `.nt-warn*`, `.nt-tl*`, `.cmd*`) y sus reglas de densidad: altura de control 28 px, texto base 13 px, eyebrows mono de 9–10 px, radios de 2 px, hairlines de 1 px, `tabular-nums` en todo número, sin sombras, sin glass, sin blur, sin glow.
+
+## Iconografía
+
+[Lucide](https://lucide.dev) — outline, trazo `1.5`, extremos redondeados, `currentColor`. Tamaños 16/20 en UI densa, 24 en contenido, 32–40 en hero. Sin rellenos, sin sombras.
+
+Los iconos de dominio que no existen en Lucide (DEM, viewshed, línea de visión, sombra topográfica, vector de iluminación, exposición del terreno) están pendientes de producción y se dibujarán sobre la retícula de Lucide (24×24, 1.5 px). Hasta entonces se usan aproximaciones de Lucide.
+
+Nunca: mezclar familias de iconos, rellenar iconos outline, ponerles sombra, usar emoji como sustituto ni dingbats Unicode.
+
+## Anti-patrones
+
+**Visual** — gradientes azul-morado, neón, «cyberpunk», «y2k». Cards con esquinas redondeadas y borde izquierdo de color. Tipografía display estarcida o condensada de estética militar. Camuflaje, retículas, miras, siluetas de casco. Tiras de logos «Trusted by» de clientes que no existen. Fotografía de stock de equipos sonrientes. SVG dibujados a mano, doodles. Fondos de partículas, gradientes animados. Tiers de precios SaaS, muros de checkmarks, carruseles de testimonios. Burbujas de chat flotantes, CTA pegados abajo en móvil. Cards de cristal esmerilado, sidebars translúcidas.
+
+**Copy** — «revolucionario», «next-gen», «empoderar», «definitivo». «Estamos emocionados de…», el «nosotros» inflado de una empresa de un solo fundador. Emoji. Traducir *targeting* como *objetivos* a secas: pierde el matiz ético. Llamar «demo» a lo que es una *conversación piloto*.
+
+**Color** — rojo donde no es alerta. CTA verdes o naranjas. Más de tres colores activos por composición. Invertir el gradiente estratigráfico. Rampas cálido→frío como decoración, sin leyenda y sin representar una variable.
+
+## Accesibilidad
+
+- Todo control interactivo con nombre accesible.
+- Focus visible obligatorio.
+- Contraste AA mínimo en texto.
+- Errores de formulario con `role="alert"` o región `aria-live`.
+- No depender solo del color para comunicar estado — de ahí que la severidad use peso y posición además de rojo.
 
 ## Autenticación
 
 El flujo vive en `src/features/auth`.
 
-- El modo `mock` permite desarrollo local con `admin/admin`.
-- El modo `server` hace `POST` al endpoint definido por `VITE_API_BASE_URL` y `VITE_AUTH_LOGIN_PATH`.
-- La app espera JWT Bearer (`accessToken`) y mantiene el token de acceso solo en memoria.
-- El `refreshToken` se persiste y se usa tanto al recargar la app como tras un `401`.
-- El storage está encapsulado en `authStorage`; no acceder a `localStorage` desde componentes.
-- Las llamadas al backend deben hacerse a través de `apiClient`.
-- Cualquier nueva pantalla protegida debe leer sesión desde `useAuth`.
-
-## Copy UI
-
-- Idioma inicial: español técnico-profesional.
-- Usar `Neural Terrena` en texto y `neural terrena` solo para el wordmark.
-- Mantener `Terrain Intelligence` en inglés.
-- Acrónimos canónicos: `HADR`, `CIP`, `LOS`, `DEM`, `C-UAS`.
-- Evitar: revolucionario, next-gen, all-in-one, transformar, empoderar.
-
-## Accesibilidad
-
-- Todo control interactivo debe tener nombre accesible.
-- Focus visible obligatorio.
-- Contraste AA mínimo en texto.
-- Errores de formulario con `role="alert"` o región `aria-live`.
-- No depender solo de color para comunicar estado.
+- **Solo modo servidor.** No hay modo mock: `authService` habla siempre con el backend definido por `VITE_API_BASE_URL` y los `VITE_AUTH_*`.
+- El `accessToken` vive **solo en memoria**, en `authSessionStore`. Nada lo persiste.
+- El refresh usa cookie httpOnly del backend (`credentials: "include"`); no hay `refreshToken` en `localStorage`.
+- El `AuthUser` se decodifica del payload del JWT en cliente.
+- Todas las llamadas de red pasan por `apiClient`. Ante un `401` refresca una vez y reintenta.
+- Nunca leer `localStorage` ni llamar a `fetch` desde un componente.
+- Cualquier pantalla protegida lee sesión desde `useAuth`.
 
 ## Criterios para nuevas pantallas
 
 Antes de dar por lista una vista:
 
-- Compila con `npm run build`.
-- Pasa `npm run lint` y `npm run test`.
-- No introduce nuevos colores fuera de tokens.
-- No usa imágenes genéricas o decorativas sin función.
+- Compila con `npm run build`, pasa `npm run lint` y `npm run test`.
+- No introduce colores, tamaños, espaciados, radios ni duraciones fuera de `tokens.scss`.
+- No usa imágenes decorativas sin función.
 - No convierte una herramienta en una landing.
-
-## Convención de Features
-
-Toda pantalla o flujo nuevo debe nacer dentro de una feature siguiendo `docs/FEATURE_CONVENTION.md`.
-
-Regla práctica:
-
-- `ui` decide cómo se ve.
-- `model` decide cómo funciona.
-- `api` decide cómo habla con servicios externos.
-
-Si una vista necesita lógica compartida con otra feature, primero se duplica localmente de forma consciente y solo se sube a `shared` cuando el segundo caso de uso sea real y estable.
+- Todo string visible pasa por `t()`, con `en` y `es`.
+- Nace dentro de una feature siguiendo `docs/FEATURE_CONVENTION.md`: `ui` decide cómo se ve, `model` cómo funciona, `api` cómo habla con servicios externos.

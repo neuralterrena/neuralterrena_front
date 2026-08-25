@@ -1,21 +1,26 @@
-import { CalendarClock, ChevronLeft, ChevronRight, Globe2, Layers3, Map as MapIcon, Pause, Play, RotateCw, Wind, X } from "lucide-react";
+import { RotateCw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { Map } from "maplibre-gl";
 import { useLanguage } from "@/shared/providers";
 import { buildRasterTileUrl, getModels, getRunMetadata, getRuns, getWindField, type ForecastLayer, type ForecastModel, type ForecastModelId, type RasterRange, type RunInfo, type WindField } from "../api/forecastMapApi";
-import { readMapConfiguration, type MapProjection } from "../model/config";
+import { readMapConfiguration, type BasemapId, type MapProjection } from "../model/config";
 import { availableLayers, forecastLayerDefinitions, forecastValidDate, layerById, selectLayer } from "../model/layers";
+import type { MeasureMode } from "../model/measure";
+import { useIsCompactViewport, useMapView } from "../model/useMapView";
+import { useMeasure } from "../model/useMeasure";
+import { MapControlLayer, type MapViewMode, type PanelId } from "./MapControlLayer";
 import { MapLibreViewport } from "./MapLibreViewport";
+import { ForecastPanel, type WindMode } from "./controls/ForecastPanel";
 
 const configuration = readMapConfiguration();
-type MapViewMode = "terrain" | "globe" | "flat";
-type WindMode = "particles" | "arrows";
 
 const toMessage = (error: unknown) => error instanceof Error ? error.message : "No se pudieron cargar las predicciones.";
 const modelAttribution = (model: ForecastModelId) => model === "gfs" ? "NOAA GFS" : model === "icon-eu" ? "DWD ICON-EU" : model;
 const modelLabel = (model: ForecastModel) => model.label || modelAttribution(model.id);
 
 export function MapPage() {
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
+  const compact = useIsCompactViewport();
   const [viewMode, setViewMode] = useState<MapViewMode>("flat");
   const [models, setModels] = useState<ForecastModel[]>([]);
   const [model, setModel] = useState<ForecastModelId | null>(null);
@@ -30,13 +35,20 @@ export function MapPage() {
   const [windEnabled, setWindEnabled] = useState(false);
   const [windMode, setWindMode] = useState<WindMode>("particles");
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isForecastPanelOpen, setIsForecastPanelOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [map, setMap] = useState<Map | null>(null);
+  const [styleEpoch, setStyleEpoch] = useState(0);
+  const [basemapId, setBasemapId] = useState<BasemapId>(configuration.basemaps[0].id);
+  const [activePanel, setActivePanel] = useState<PanelId | null>(null);
+  const [measureMode, setMeasureMode] = useState<MeasureMode>("distance");
   const requestRef = useRef<AbortController | null>(null);
   const translateRef = useRef(t);
   const projection: MapProjection = viewMode === "globe" ? "globe" : "mercator";
+  const view = useMapView(map);
+  const measure = useMeasure(map, activePanel === "measure", measureMode, styleEpoch);
+  const activeBasemap = configuration.basemaps.find((candidate) => candidate.id === basemapId) ?? configuration.basemaps[0];
   const timelineHours = useMemo(() => metadata?.forecast_hours ?? [], [metadata]);
   const selectedHour = timelineHours.includes(hour ?? -1) ? hour : (timelineHours[0] ?? null);
   const validLayers = availableLayers(metadata, selectedHour);
@@ -168,23 +180,105 @@ export function MapPage() {
     setForecastHour(timelineHours[(index + direction + timelineHours.length) % timelineHours.length]);
   };
 
+  const forecastPanel = models.length ? (
+    <ForecastPanel
+      currentLayer={currentLayer}
+      groupedLayers={groupedLayers}
+      isPlaying={isPlaying}
+      model={model}
+      modelLabel={modelLabel}
+      models={models}
+      onHourChange={setForecastHour}
+      onLayerChange={(nextLayer) => { setLayer(nextLayer); setNotice(null); }}
+      onModelChange={setModel}
+      onPlayToggle={() => setIsPlaying((value) => !value)}
+      onRunChange={setRun}
+      onStep={moveHour}
+      onWindModeChange={setWindMode}
+      onWindToggle={setWindEnabled}
+      run={run}
+      runs={runs}
+      selectedHour={selectedHour}
+      timelineHours={timelineHours}
+      validDate={validDate}
+      windAvailable={windAvailable}
+      windEnabled={windEnabled}
+      windMode={windMode}
+    />
+  ) : (
+    <p className="nt-measure-hint">{t("map.loadingModel")}</p>
+  );
+
+  const legend = definition && range ? (
+    <div aria-label={t("map.legend").replace("{layer}", t(definition.labelKey))} className="nt-mapramp">
+      <div className="nt-mapramp__head">
+        <span className="nt-mapramp__title">{t(definition.labelKey)}</span>
+        <span className="nt-mapramp__unit">{definition.unit}</span>
+      </div>
+      <div aria-hidden="true" className="nt-mapramp__scale" style={{ background: "linear-gradient(90deg, #352a87, #0f88b5, #f5e663, #d83d42)" }} />
+      <div className="nt-mapramp__labels">
+        <span>{definition.convert ? definition.convert(range.min).toFixed(0) : range.min}</span>
+        <span>{definition.convert ? definition.convert(range.max).toFixed(0) : range.max}</span>
+      </div>
+      {definition.descriptionKey ? <p className="nt-mapramp__note">{t(definition.descriptionKey)}</p> : null}
+      {model ? <p className="nt-mapramp__note">{t("map.attribution")}: {modelAttribution(model)}</p> : null}
+    </div>
+  ) : null;
+
+  const status = (
+    <>
+      {isLoading ? <div aria-live="polite" className="nt-mapstatus" role="status">{t("map.updating")}</div> : null}
+      {notice ? <div className="nt-mapstatus" role="status">{notice}</div> : null}
+      {error ? (
+        <div className="nt-mapstatus nt-mapstatus--alert" role="alert">
+          <span className="nt-mapstatus__title">{t("map.forecastErrorTitle")}</span>
+          <span className="nt-mapstatus__detail">{error}</span>
+          <button className="nt-mapstatus__action" onClick={loadModels} type="button">
+            <RotateCw aria-hidden="true" strokeWidth={1.5} /> {t("map.retry")}
+          </button>
+        </div>
+      ) : null}
+    </>
+  );
+
   return <main className="map-page">
-    <MapLibreViewport configuration={configuration} flat={viewMode === "flat"} forecastPanelAriaLabel={`${isForecastPanelOpen ? t("map.closeForecastControls") : t("map.openForecastControls")}. ${t("map.currentLayer").replace("{layer}", activeLayerLabel)}`} forecastPanelLabel={activeLayerLabel} forecastPanelOpen={isForecastPanelOpen} onError={setError} onForecastPanelToggle={() => setIsForecastPanelOpen((open) => !open)} projection={projection} rasterUrl={rasterUrl} rasterUrls={[]} windField={windEnabled && windAvailable ? windField : null} windMode={windMode} />
-    {models.length ? <>
-      {isForecastPanelOpen ? <section aria-label={t("map.forecastPanel")} className="forecast-control" id="forecast-control-panel">
-        <header className="forecast-control__header"><div><h2>{t("map.forecast")}</h2><p>{model ? `${modelAttribution(model)} · ${run || t("map.noCycle")}` : t("map.loadingModel")}</p></div><button aria-label={t("map.closeForecastControls")} className="forecast-control__close" onClick={() => setIsForecastPanelOpen(false)} type="button"><X aria-hidden="true" size={17} /></button></header>
-        <div className="forecast-control__selectors"><label className="forecast-control__select-field"><span><Layers3 aria-hidden="true" size={15} />{t("map.model")}</span><select aria-label={t("map.model")} onChange={(event) => setModel(event.target.value)} value={model ?? ""}>{models.map((candidate) => <option key={candidate.id} value={candidate.id}>{modelLabel(candidate)}</option>)}</select></label><label className="forecast-control__select-field"><span><CalendarClock aria-hidden="true" size={15} />{t("map.run")}</span><select aria-label={t("map.run")} onChange={(event) => setRun(event.target.value)} value={run}>{runs.map(([id, item]) => <option key={id} value={id}>{id} · {new Date(item.created_at).toLocaleString(language === "en" ? "en-US" : "es-ES")}</option>)}</select></label></div>
-        <label className="forecast-control__select-field forecast-control__layer-picker"><span><Layers3 aria-hidden="true" size={15} />{t("map.layer")}</span><select aria-label={t("map.layer")} disabled={!currentLayer} onChange={(event) => { setLayer(event.target.value as ForecastLayer); setNotice(null); }} value={currentLayer ?? ""}>{currentLayer ? null : <option value="">{t("map.layersUnavailable")}</option>}{groupedLayers.map((layers, index) => layers.length ? <optgroup key={index} label={index ? t("map.advancedLayers") : t("map.surface")}>{layers.map((candidate) => <option key={candidate.id} value={candidate.id}>{t(candidate.labelKey)}</option>)}</optgroup> : null)}</select></label>
-        <div className="forecast-control__wind"><label className="forecast-control__wind-toggle"><span><Wind aria-hidden="true" size={15} />{t("map.wind")}</span><input checked={windEnabled} disabled={!windAvailable} onChange={(event) => setWindEnabled(event.target.checked)} type="checkbox" /><i aria-hidden="true" /></label>{windEnabled && windAvailable ? <label className="forecast-control__select-field forecast-control__wind-mode"><span>{t("map.windDisplay")}</span><select aria-label={t("map.windDisplay")} onChange={(event) => setWindMode(event.target.value as WindMode)} value={windMode}><option value="particles">{t("map.windParticles")}</option><option value="arrows">{t("map.windArrows")}</option></select></label> : null}{!windAvailable ? <span>{t("map.windUnavailable")}</span> : null}</div>
-        <div className="forecast-control__timeline"><span>{t("map.timeLead")}</span><div className="forecast-control__time"><button aria-label={t("map.hourPrevious")} disabled={!timelineHours.length} onClick={() => moveHour(-1)} type="button"><ChevronLeft size={16} /></button><input aria-label={t("map.timeLead")} max={Math.max(0, timelineHours.length - 1)} min="0" onChange={(event) => setForecastHour(timelineHours[Number(event.target.value)])} type="range" value={Math.max(0, timelineHours.indexOf(selectedHour ?? -1))} /><button aria-label={t("map.hourNext")} disabled={!timelineHours.length} onClick={() => moveHour(1)} type="button"><ChevronRight size={16} /></button><button aria-label={isPlaying ? t("map.pause") : t("map.play")} disabled={timelineHours.length < 2} onClick={() => setIsPlaying((value) => !value)} type="button">{isPlaying ? <Pause size={16} /> : <Play size={16} />}</button><strong>+{selectedHour ?? "---"} h</strong></div>{validDate ? <p className="forecast-control__valid">{t("map.valid")}: {validDate.toLocaleString(language === "en" ? "en-US" : "es-ES", { dateStyle: "medium", timeStyle: "short" })}</p> : null}</div>
-      </section> : null}
-    </> : null}
-    {definition && range ? <aside aria-label={t("map.legend").replace("{layer}", t(definition.labelKey))} className="map-layer-legend"><div><strong>{t(definition.labelKey)}</strong><span>{definition.unit}</span></div><div aria-hidden="true" className="map-layer-legend__scale" /><div className="map-layer-legend__labels"><span>{definition.convert ? definition.convert(range.min).toFixed(0) : range.min}</span><span>{definition.convert ? definition.convert(range.max).toFixed(0) : range.max}</span></div>{definition.descriptionKey ? <small>{t(definition.descriptionKey)}</small> : null}</aside> : null}
-    <div aria-label={t("map.projectionMode")} className="map-projection-control" role="group"><button aria-pressed={viewMode === "terrain"} onClick={() => setViewMode("terrain")} type="button"><MapIcon aria-hidden="true" size={17} />{t("map.terrain")}</button><button aria-pressed={viewMode === "globe"} onClick={() => setViewMode("globe")} type="button"><Globe2 aria-hidden="true" size={17} />{t("map.viewGlobe")}</button><button aria-pressed={viewMode === "flat"} onClick={() => setViewMode("flat")} type="button"><MapIcon aria-hidden="true" size={17} />{t("map.flat")}</button></div>
-    {model ? <p className="map-attribution">{t("map.attribution")}: {modelAttribution(model)}</p> : null}
-    {isLoading ? <div aria-live="polite" className="map-loading-state" role="status">{t("map.updating")}</div> : null}
-    {notice ? <div className="map-notice-state" role="status">{notice}</div> : null}
-    {error ? <div className="map-error-state" role="alert"><strong>{t("map.forecastErrorTitle")}</strong><span>{error}</span><button onClick={loadModels} type="button"><RotateCw size={15} /> {t("map.retry")}</button></div> : null}
-    {!configuration.forecastHubApiBaseUrl ? <div className="map-configuration-state"><h1>{t("map.configTitle")}</h1><p>{t("map.configDescription")}</p></div> : null}
+    <MapLibreViewport
+      basemapStyleUrl={activeBasemap.styleUrl}
+      compact={compact}
+      configuration={configuration}
+      flat={viewMode === "flat"}
+      onError={setError}
+      onMapReady={setMap}
+      onStyleReload={() => setStyleEpoch((epoch) => epoch + 1)}
+      projection={projection}
+      rasterUrl={rasterUrl}
+      rasterUrls={[]}
+      windField={windEnabled && windAvailable ? windField : null}
+      windMode={windMode}
+    >
+      {map ? (
+        <MapControlLayer
+          activePanel={activePanel}
+          basemaps={configuration.basemaps}
+          compact={compact}
+          forecastPanel={forecastPanel}
+          forecastPanelTitle={`${t("map.predictionLayers")} · ${activeLayerLabel}`}
+          legend={legend}
+          map={map}
+          measure={measure}
+          measureMode={measureMode}
+          onBasemapChange={setBasemapId}
+          onMeasureModeChange={setMeasureMode}
+          onNotice={setNotice}
+          onPanelChange={setActivePanel}
+          onViewModeChange={setViewMode}
+          selectedBasemap={basemapId}
+          status={status}
+          view={view}
+          viewMode={viewMode}
+        />
+      ) : null}
+      {!configuration.forecastHubApiBaseUrl ? <div className="map-configuration-state"><h1>{t("map.configTitle")}</h1><p>{t("map.configDescription")}</p></div> : null}
+    </MapLibreViewport>
   </main>;
 }

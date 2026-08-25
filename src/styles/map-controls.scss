@@ -1,0 +1,631 @@
+/* ============================================================
+   Neural Terrena — Map Controls
+   Component styles for the product (MVP) map UI.
+   Single source of truth: linked by the interactive demo AND
+   by the Design-System preview cards, so they never drift.
+
+   Requires colors_and_type.css (tokens + type) to be loaded first.
+   Prefix: --nt-* tokens · .nt-map* component classes.
+   ============================================================ */
+
+/* ---- Map container ----------------------------------------- */
+.nt-map {
+  --nt-ctl: 36px;            /* control hit size — web default      */
+  --nt-ctl-icon: 20px;       /* icon size inside a control          */
+  --nt-ctl-pad: 12px;        /* inset of clusters from map edge     */
+  --nt-ctl-gap: 12px;        /* gap between separate clusters       */
+
+  position: relative;
+  overflow: hidden;
+  font-family: var(--nt-font-ui);
+  color: var(--nt-fg);
+  background: var(--nt-bg-subtle);
+  border: 1px solid var(--nt-border);
+  border-radius: var(--nt-radius-md);
+  isolation: isolate;
+  user-select: none;
+}
+.nt-map[data-theme="dark"] {
+  background: #1A1A1A;
+  border-color: var(--nt-gray-700);
+}
+
+/* Mobile density — larger targets, per platform guidance (≥44px) */
+.nt-map--mobile {
+  --nt-ctl: 48px;
+  --nt-ctl-icon: 24px;
+  --nt-ctl-pad: 16px;
+  --nt-ctl-gap: 14px;
+}
+
+/* ---- Basemap canvas ---------------------------------------- */
+.nt-map__canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.nt-map__canvas svg { display: block; width: 100%; height: 100%; }
+
+/* ---- Overlay + corner anchors ------------------------------ */
+.nt-map__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.nt-map__corner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: var(--nt-ctl-gap);
+  pointer-events: none;
+}
+.nt-map__corner > * { pointer-events: auto; }
+.nt-map__corner--tl { top: var(--nt-ctl-pad); left: var(--nt-ctl-pad); align-items: flex-start; }
+.nt-map__corner--tr { top: var(--nt-ctl-pad); right: var(--nt-ctl-pad); align-items: flex-end; }
+.nt-map__corner--bl { bottom: var(--nt-ctl-pad); left: var(--nt-ctl-pad); align-items: flex-start; }
+.nt-map__corner--br { bottom: var(--nt-ctl-pad); right: var(--nt-ctl-pad); align-items: flex-end; }
+
+/* ============================================================
+   Control button — the primitive
+   ============================================================ */
+.nt-mapbtn {
+  -webkit-appearance: none; appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--nt-ctl);
+  height: var(--nt-ctl);
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--nt-border-strong);
+  border-radius: var(--nt-radius-md);
+  background: var(--nt-surface);
+  color: var(--nt-fg);
+  cursor: pointer;
+  transition: background var(--nt-dur-base) var(--nt-ease),
+              border-color var(--nt-dur-base) var(--nt-ease),
+              color var(--nt-dur-base) var(--nt-ease),
+              opacity var(--nt-dur-fast) var(--nt-ease);
+}
+.nt-mapbtn svg { width: var(--nt-ctl-icon); height: var(--nt-ctl-icon); display: block; }
+.nt-mapbtn:hover { border-color: var(--nt-fg); }
+.nt-mapbtn:active { opacity: 0.85; }
+.nt-mapbtn:focus-visible { outline: 2px solid var(--nt-color-blue); outline-offset: 2px; }
+.nt-mapbtn[disabled] {
+  background: var(--nt-gray-100);
+  border-color: var(--nt-gray-300);
+  color: var(--nt-gray-500);
+  cursor: not-allowed;
+}
+
+/* Toggled-on state — institutional blue */
+.nt-mapbtn--active,
+.nt-mapbtn[aria-pressed="true"] {
+  background: var(--nt-color-blue);
+  border-color: var(--nt-color-blue);
+  color: var(--nt-color-white);
+}
+.nt-mapbtn--active:hover,
+.nt-mapbtn[aria-pressed="true"]:hover { background: var(--nt-cta-primary-hover); border-color: var(--nt-cta-primary-hover); }
+
+/* ---- Button visual variants (set on .nt-map[data-btn=…]) --- */
+/* elevated — default card look: white + hairline + subtle shadow */
+.nt-map[data-btn="elevated"] .nt-mapbtn,
+.nt-map[data-btn="elevated"] .nt-mapgroup,
+.nt-map[data-btn="elevated"] .nt-mappanel,
+.nt-map[data-btn="elevated"] .nt-mapsearch__field,
+.nt-map[data-btn="elevated"] .nt-mappill {
+  border-color: var(--nt-border);
+  box-shadow: var(--nt-shadow-sm);
+}
+.nt-map[data-btn="elevated"] .nt-mapbtn:hover { border-color: var(--nt-border-strong); }
+
+/* flat — bordered, no shadow */
+.nt-map[data-btn="flat"] .nt-mapbtn,
+.nt-map[data-btn="flat"] .nt-mapgroup,
+.nt-map[data-btn="flat"] .nt-mappanel,
+.nt-map[data-btn="flat"] .nt-mapsearch__field,
+.nt-map[data-btn="flat"] .nt-mappill {
+  box-shadow: none;
+  border-color: var(--nt-border-strong);
+}
+
+/* solid — dark surface, light icon (high-contrast over busy maps) */
+.nt-map[data-btn="solid"] .nt-mapbtn,
+.nt-map[data-btn="solid"] .nt-mapgroup > .nt-mapbtn {
+  background: var(--nt-color-black);
+  border-color: var(--nt-color-black);
+  color: var(--nt-color-white);
+}
+.nt-map[data-btn="solid"] .nt-mapbtn:hover { background: var(--nt-color-blue); border-color: var(--nt-color-blue); }
+.nt-map[data-btn="solid"] .nt-mapgroup { background: var(--nt-color-black); border-color: var(--nt-color-black); }
+.nt-map[data-btn="solid"] .nt-mapgroup__divider { background: rgba(255,255,255,0.16); }
+.nt-map[data-btn="solid"] .nt-mapbtn--active { background: var(--nt-color-blue); border-color: var(--nt-color-blue); }
+
+/* Dark theme surfaces */
+.nt-map[data-theme="dark"] .nt-mapbtn,
+.nt-map[data-theme="dark"] .nt-mapgroup,
+.nt-map[data-theme="dark"] .nt-mappanel,
+.nt-map[data-theme="dark"] .nt-mapsearch__field,
+.nt-map[data-theme="dark"] .nt-mappill {
+  background: var(--nt-color-black);
+  border-color: var(--nt-gray-700);
+  color: var(--nt-color-white);
+}
+.nt-map[data-theme="dark"] .nt-mapbtn:hover { border-color: var(--nt-gray-500); }
+.nt-map[data-theme="dark"] .nt-mapgroup__divider { background: var(--nt-gray-700); }
+.nt-map[data-theme="dark"][data-btn="solid"] .nt-mapbtn,
+.nt-map[data-theme="dark"][data-btn="solid"] .nt-mapgroup { background: #000; border-color: #000; }
+
+/* ============================================================
+   Cluster — stacked controls sharing one rounded container
+   ============================================================ */
+.nt-mapgroup {
+  display: flex;
+  flex-direction: column;
+  background: var(--nt-surface);
+  border: 1px solid var(--nt-border-strong);
+  border-radius: var(--nt-radius-md);
+  overflow: hidden;
+}
+.nt-mapgroup--row { flex-direction: row; }
+.nt-mapgroup > .nt-mapbtn {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  width: var(--nt-ctl);
+  height: var(--nt-ctl);
+}
+.nt-mapgroup__divider { width: 100%; height: 1px; background: var(--nt-border); flex: none; }
+.nt-mapgroup--row .nt-mapgroup__divider { width: 1px; height: auto; align-self: stretch; }
+
+/* ============================================================
+   Floating panel — basemap / layers / settings / measure
+   ============================================================ */
+.nt-mappanel {
+  width: 248px;
+  max-width: calc(100vw - 32px);
+  background: var(--nt-surface);
+  border: 1px solid var(--nt-border-strong);
+  border-radius: var(--nt-radius-md);
+  box-shadow: var(--nt-shadow-md);
+  overflow: hidden;
+}
+.nt-mappanel--wide { width: 288px; }
+.nt-mappanel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 12px 12px 16px;
+  border-bottom: 1px solid var(--nt-border);
+}
+.nt-mappanel__title {
+  font-size: var(--nt-text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--nt-fg-muted);
+}
+.nt-mappanel__close {
+  -webkit-appearance: none; appearance: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px;
+  border: none; background: transparent; color: var(--nt-fg-muted);
+  border-radius: var(--nt-radius-sm); cursor: pointer;
+}
+.nt-mappanel__close:hover { background: var(--nt-bg-subtle); color: var(--nt-fg); }
+.nt-map[data-theme="dark"] .nt-mappanel__close:hover { background: var(--nt-gray-700); }
+.nt-mappanel__close svg { width: 16px; height: 16px; }
+.nt-mappanel__body { padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+
+/* Row: toggle / radio / option */
+.nt-maprow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px;
+  border-radius: var(--nt-radius-sm);
+  cursor: pointer;
+  font-size: var(--nt-text-sm);
+  transition: background var(--nt-dur-fast) var(--nt-ease);
+}
+.nt-maprow:hover { background: var(--nt-bg-subtle); }
+.nt-map[data-theme="dark"] .nt-maprow:hover { background: var(--nt-gray-700); }
+.nt-maprow__label { flex: 1; line-height: 1.3; }
+.nt-maprow__sub { display: block; font-size: var(--nt-text-xs); color: var(--nt-fg-subtle); margin-top: 2px; }
+.nt-maprow__swatch { width: 12px; height: 12px; border-radius: 2px; flex: none; }
+
+/* Checkbox + switch */
+.nt-check {
+  width: 18px; height: 18px; flex: none;
+  border: 1.5px solid var(--nt-border-strong);
+  border-radius: var(--nt-radius-sm);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: transparent; background: var(--nt-surface);
+  transition: background var(--nt-dur-fast) var(--nt-ease), border-color var(--nt-dur-fast) var(--nt-ease);
+}
+.nt-check svg { width: 13px; height: 13px; }
+.nt-maprow[aria-checked="true"] .nt-check {
+  background: var(--nt-color-blue);
+  border-color: var(--nt-color-blue);
+  color: var(--nt-color-white);
+}
+.nt-radio {
+  width: 16px; height: 16px; flex: none; border-radius: var(--nt-radius-full);
+  border: 1.5px solid var(--nt-border-strong); background: var(--nt-surface);
+  position: relative;
+}
+.nt-maprow[aria-checked="true"] .nt-radio { border-color: var(--nt-color-blue); }
+.nt-maprow[aria-checked="true"] .nt-radio::after {
+  content: ""; position: absolute; inset: 3px; border-radius: var(--nt-radius-full);
+  background: var(--nt-color-blue);
+}
+
+/* ============================================================
+   Search
+   ============================================================ */
+.nt-mapsearch { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.nt-mapsearch__field {
+  display: flex; align-items: center; gap: 8px;
+  height: var(--nt-ctl);
+  padding: 0 10px;
+  background: var(--nt-surface);
+  border: 1px solid var(--nt-border-strong);
+  border-radius: var(--nt-radius-md);
+  width: 300px; max-width: calc(100vw - 32px);
+  transition: width var(--nt-dur-slow) var(--nt-ease), border-color var(--nt-dur-base) var(--nt-ease);
+}
+.nt-mapsearch--collapsed .nt-mapsearch__field { width: var(--nt-ctl); padding: 0; justify-content: center; }
+.nt-mapsearch__field:focus-within { border-color: var(--nt-color-blue); }
+.nt-mapsearch__icon { display: inline-flex; color: var(--nt-fg-muted); flex: none; }
+.nt-mapsearch__icon svg { width: var(--nt-ctl-icon); height: var(--nt-ctl-icon); }
+.nt-mapsearch__input {
+  flex: 1; min-width: 0; border: none; background: transparent; outline: none;
+  font-family: var(--nt-font-ui); font-size: var(--nt-text-sm); color: var(--nt-fg);
+}
+.nt-mapsearch--collapsed .nt-mapsearch__input { display: none; }
+.nt-mapsearch__input::placeholder { color: var(--nt-fg-subtle); }
+.nt-mapsearch__clear {
+  border: none; background: transparent; color: var(--nt-fg-subtle); cursor: pointer;
+  display: inline-flex; padding: 2px; border-radius: var(--nt-radius-sm);
+}
+.nt-mapsearch__clear:hover { color: var(--nt-fg); }
+.nt-mapsearch__clear svg { width: 16px; height: 16px; }
+.nt-mapsearch__results {
+  width: 300px; max-width: calc(100vw - 32px);
+  background: var(--nt-surface);
+  border: 1px solid var(--nt-border-strong);
+  border-radius: var(--nt-radius-md);
+  box-shadow: var(--nt-shadow-md);
+  overflow: hidden;
+}
+.nt-mapsearch__item {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 8px 12px; cursor: pointer;
+  transition: background var(--nt-dur-fast) var(--nt-ease);
+}
+.nt-mapsearch__item:hover { background: var(--nt-bg-subtle); }
+.nt-map[data-theme="dark"] .nt-mapsearch__item:hover { background: var(--nt-gray-700); }
+.nt-mapsearch__name { font-size: var(--nt-text-sm); color: var(--nt-fg); }
+.nt-mapsearch__coord { font-family: var(--nt-font-mono); font-size: var(--nt-text-xs); color: var(--nt-fg-subtle); }
+
+/* ============================================================
+   Basemap switcher (thumbnail options)
+   ============================================================ */
+.nt-basemap-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.nt-basemap-opt {
+  display: flex; flex-direction: column; gap: 6px; cursor: pointer;
+  padding: 4px; border-radius: var(--nt-radius-sm);
+}
+.nt-basemap-opt__thumb {
+  aspect-ratio: 1.5 / 1; border-radius: var(--nt-radius-sm);
+  border: 2px solid var(--nt-border); overflow: hidden; position: relative;
+}
+.nt-basemap-opt[aria-checked="true"] .nt-basemap-opt__thumb { border-color: var(--nt-color-blue); }
+.nt-basemap-opt__label { font-size: var(--nt-text-xs); color: var(--nt-fg-muted); text-align: center; }
+.nt-basemap-opt[aria-checked="true"] .nt-basemap-opt__label { color: var(--nt-fg); font-weight: 600; }
+
+/* ============================================================
+   Scale bar + coordinate readout
+   ============================================================ */
+.nt-mapscale { display: flex; flex-direction: column; gap: 3px; }
+.nt-mapscale__bar {
+  height: 8px; min-width: 80px;
+  border: 1px solid var(--nt-fg); border-top: none;
+  display: flex;
+}
+.nt-map[data-theme="dark"] .nt-mapscale__bar,
+.nt-map[data-theme="dark"] .nt-mapscale__seg { border-color: var(--nt-color-white); }
+.nt-mapscale__seg { flex: 1; border-left: 1px solid var(--nt-fg); }
+.nt-mapscale__seg:first-child { border-left: none; }
+.nt-mapscale__seg:nth-child(odd) { background: rgba(26,26,26,0.0); }
+.nt-mapscale__label {
+  font-family: var(--nt-font-mono); font-size: 11px; font-weight: 500;
+  color: var(--nt-fg); letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px var(--nt-bg);
+}
+.nt-mappill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 5px 10px;
+  background: var(--nt-surface);
+  border: 1px solid var(--nt-border-strong);
+  border-radius: var(--nt-radius-md);
+  font-family: var(--nt-font-mono);
+  font-size: var(--nt-text-xs);
+  color: var(--nt-fg);
+}
+.nt-mappill__key { color: var(--nt-fg-subtle); text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px; }
+
+/* ============================================================
+   Measure readout
+   ============================================================ */
+.nt-measure-readout { display: flex; flex-direction: column; gap: 8px; padding: 4px 4px 8px; }
+.nt-measure-stat { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.nt-measure-stat__k { font-size: var(--nt-text-xs); color: var(--nt-fg-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.nt-measure-stat__v { font-family: var(--nt-font-mono); font-size: var(--nt-text-lg); font-weight: 500; color: var(--nt-fg); }
+.nt-measure-stat__v small { font-size: var(--nt-text-xs); color: var(--nt-fg-subtle); margin-left: 3px; }
+.nt-measure-hint {
+  font-size: var(--nt-text-xs); color: var(--nt-fg-subtle); line-height: 1.45;
+  padding: 8px 8px 0; border-top: 1px dashed var(--nt-border); margin-top: 2px;
+}
+
+/* segmented control (measure mode picker) */
+.nt-seg { display: flex; gap: 0; border: 1px solid var(--nt-border-strong); border-radius: var(--nt-radius-md); overflow: hidden; }
+.nt-seg__btn {
+  -webkit-appearance: none; appearance: none;
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 6px; border: none; background: var(--nt-surface); color: var(--nt-fg-muted);
+  font-family: var(--nt-font-ui); font-size: var(--nt-text-xs); font-weight: 600; cursor: pointer;
+  border-left: 1px solid var(--nt-border);
+}
+.nt-seg__btn:first-child { border-left: none; }
+.nt-seg__btn svg { width: 16px; height: 16px; }
+.nt-seg__btn:hover { background: var(--nt-bg-subtle); color: var(--nt-fg); }
+.nt-map[data-theme="dark"] .nt-seg__btn:hover { background: var(--nt-gray-700); }
+.nt-seg__btn--active { background: var(--nt-color-blue); color: var(--nt-color-white); }
+.nt-seg__btn--active:hover { background: var(--nt-cta-primary-hover); color: var(--nt-color-white); }
+
+/* ============================================================
+   Mobile bottom toolbar
+   ============================================================ */
+.nt-map__bottombar {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+  display: flex; align-items: center; justify-content: space-around;
+  gap: 4px; padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+  background: var(--nt-surface);
+  border-top: 1px solid var(--nt-border);
+}
+.nt-map[data-theme="dark"] .nt-map__bottombar { background: var(--nt-color-black); border-color: var(--nt-gray-700); }
+.nt-tabbtn {
+  -webkit-appearance: none; appearance: none;
+  display: inline-flex; flex-direction: column; align-items: center; gap: 4px;
+  border: none; background: transparent; color: var(--nt-fg-muted); cursor: pointer;
+  font-family: var(--nt-font-ui); font-size: 11px; font-weight: 600;
+  padding: 4px 8px; border-radius: var(--nt-radius-sm); min-width: 52px;
+}
+.nt-tabbtn svg { width: 24px; height: 24px; }
+.nt-tabbtn--active { color: var(--nt-color-blue); }
+.nt-map[data-theme="dark"] .nt-tabbtn--active { color: var(--nt-color-yellow); }
+
+/* Mobile sheet (bottom-anchored panel) */
+.nt-map__sheet {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 4;
+  background: var(--nt-surface);
+  border-top-left-radius: var(--nt-radius-lg);
+  border-top-right-radius: var(--nt-radius-lg);
+  box-shadow: var(--nt-shadow-lg);
+  padding: 8px 16px 16px;
+  animation: nt-sheet-up var(--nt-dur-base) var(--nt-ease);
+}
+.nt-map[data-theme="dark"] .nt-map__sheet { background: var(--nt-color-black); }
+.nt-map__sheet-grip { width: 36px; height: 4px; border-radius: 2px; background: var(--nt-border-strong); margin: 4px auto 12px; }
+@keyframes nt-sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .nt-map__sheet { animation: none; } }
+
+/* ============================================================
+   Project extensions — not in the canon.
+   The console runs the map full-bleed as the whole page, so the
+   kit's card framing has to come off; everything else is canon.
+   ============================================================ */
+
+/* Full-bleed: no card border, no radius, fills its parent. */
+.nt-map--bleed {
+  border: none;
+  border-radius: 0;
+  height: 100%;
+  width: 100%;
+}
+.nt-map--bleed.nt-map[data-theme="dark"] { border: none; }
+
+/* The MapLibre canvas replaces the kit's inline SVG basemap. */
+.nt-map__canvas .maplibregl-canvas-container,
+.nt-map__canvas .maplibregl-canvas { height: 100%; width: 100%; }
+
+/* MapLibre draws its own attribution control; align it to the kit. */
+.nt-map .maplibregl-ctrl-attrib {
+  background: color-mix(in srgb, var(--nt-surface) 88%, transparent);
+  border-radius: var(--nt-radius-sm);
+  font-family: var(--nt-font-ui);
+  font-size: 10px;
+}
+.nt-map .maplibregl-ctrl-attrib a { color: var(--nt-fg-muted); }
+
+/* Corner stacks may overflow a short viewport; let them scroll rather
+   than push controls off-screen. */
+.nt-map__corner--tr,
+.nt-map__corner--tl {
+  max-height: calc(100% - var(--nt-ctl-pad) * 2);
+  overflow-x: visible;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.nt-map__corner--tr::-webkit-scrollbar,
+.nt-map__corner--tl::-webkit-scrollbar { display: none; }
+
+/* Status messages (loading / notice / error) share the pill surface. */
+.nt-mapstatus {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 8px 12px;
+  background: var(--nt-surface);
+  border: 1px solid var(--nt-border-strong);
+  border-radius: var(--nt-radius-md);
+  box-shadow: var(--nt-shadow-sm);
+  font-size: var(--nt-text-sm);
+  color: var(--nt-fg);
+}
+.nt-map[data-theme="dark"] .nt-mapstatus {
+  background: var(--nt-color-black);
+  border-color: var(--nt-gray-700);
+  color: var(--nt-color-white);
+}
+.nt-mapstatus__detail { font-size: var(--nt-text-xs); color: var(--nt-fg-muted); }
+.nt-mapstatus--alert { border-color: var(--nt-alert); }
+.nt-mapstatus--alert .nt-mapstatus__title { color: var(--nt-alert); font-weight: 600; }
+.nt-mapstatus__action {
+  -webkit-appearance: none; appearance: none;
+  align-self: flex-start;
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 4px; padding: 6px 10px;
+  border: none; border-radius: var(--nt-radius-md);
+  background: var(--nt-cta-primary-bg); color: var(--nt-cta-primary-fg);
+  font-family: var(--nt-font-ui); font-size: var(--nt-text-xs); font-weight: 600;
+  cursor: pointer;
+}
+.nt-mapstatus__action:hover { background: var(--nt-cta-primary-hover); }
+.nt-mapstatus__action svg { width: 14px; height: 14px; }
+
+/* Continuous colour ramp for the forecast legend. The canon has no
+   gradient component: this represents a real, legended variable. */
+.nt-mapramp { display: flex; flex-direction: column; gap: 6px; width: 208px; }
+.nt-mapramp__head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.nt-mapramp__title { font-size: var(--nt-text-sm); font-weight: 600; }
+.nt-mapramp__unit { font-family: var(--nt-font-mono); font-size: var(--nt-text-xs); color: var(--nt-fg-subtle); }
+.nt-mapramp__scale { height: 10px; border-radius: var(--nt-radius-sm); border: 1px solid var(--nt-border); }
+.nt-mapramp__labels {
+  display: flex; justify-content: space-between;
+  font-family: var(--nt-font-mono); font-size: var(--nt-text-xs); color: var(--nt-fg-muted);
+}
+.nt-mapramp__note { font-size: var(--nt-text-xs); color: var(--nt-fg-subtle); line-height: 1.4; }
+
+/* Measure vertices drawn on the map canvas. */
+.nt-measure-vertex {
+  width: 9px; height: 9px; border-radius: var(--nt-radius-full);
+  background: var(--nt-surface); border: 2px solid var(--nt-color-blue);
+  box-sizing: content-box;
+}
+
+/* Timeline inside the forecast panel — the scrubber the canon allows. */
+.nt-maptimeline { display: flex; flex-direction: column; gap: 6px; }
+.nt-maptimeline__row { display: flex; align-items: center; gap: 4px; }
+.nt-maptimeline__row input[type="range"] { flex: 1; min-width: 0; accent-color: var(--nt-color-blue); }
+.nt-maptimeline__lead {
+  font-family: var(--nt-font-mono); font-size: var(--nt-text-sm); font-weight: 500;
+  min-width: 52px; text-align: right; font-variant-numeric: tabular-nums;
+}
+.nt-maptimeline__valid { font-size: var(--nt-text-xs); color: var(--nt-fg-subtle); margin: 0; }
+.nt-maptimeline__step {
+  -webkit-appearance: none; appearance: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; flex: none;
+  border: none; border-radius: var(--nt-radius-sm);
+  background: transparent; color: var(--nt-fg-muted); cursor: pointer;
+}
+.nt-maptimeline__step:hover:not([disabled]) { background: var(--nt-bg-subtle); color: var(--nt-fg); }
+.nt-map[data-theme="dark"] .nt-maptimeline__step:hover:not([disabled]) { background: var(--nt-gray-700); }
+.nt-maptimeline__step[disabled] { opacity: 0.4; cursor: not-allowed; }
+.nt-maptimeline__step svg { width: 16px; height: 16px; }
+
+/* Native select inside a panel row. */
+.nt-mapselect {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 6px 8px;
+  background: var(--nt-bg-subtle);
+  border: 1px solid var(--nt-border);
+  border-radius: var(--nt-radius-sm);
+}
+.nt-map[data-theme="dark"] .nt-mapselect { background: transparent; border-color: var(--nt-gray-700); }
+.nt-mapselect__label {
+  display: flex; align-items: center; gap: 5px;
+  font-size: var(--nt-text-xs); font-weight: 600; color: var(--nt-fg-muted);
+}
+.nt-mapselect__label svg { width: 14px; height: 14px; }
+.nt-mapselect select {
+  appearance: auto; width: 100%; min-width: 0; padding: 0;
+  border: none; background: transparent; color: var(--nt-fg);
+  font-family: var(--nt-font-ui); font-size: var(--nt-text-sm); font-weight: 600;
+  outline-offset: 3px;
+}
+.nt-mapselect select:disabled { color: var(--nt-fg-subtle); }
+
+/* Rows and options are rendered as real buttons so they are keyboard
+   operable; the canon styles them as generic containers, so the button
+   chrome has to come off without touching the canon block above. */
+.nt-maprow,
+.nt-mapsearch__item,
+.nt-basemap-opt {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.nt-maprow:focus-visible,
+.nt-mapsearch__item:focus-visible,
+.nt-basemap-opt:focus-visible,
+.nt-seg__btn:focus-visible,
+.nt-tabbtn:focus-visible,
+.nt-mappanel__close:focus-visible,
+.nt-mapsearch__clear:focus-visible,
+.nt-maptimeline__step:focus-visible {
+  outline: 2px solid var(--nt-color-blue);
+  outline-offset: 2px;
+}
+.nt-map[data-theme="dark"] .nt-maprow:focus-visible,
+.nt-map[data-theme="dark"] .nt-seg__btn:focus-visible {
+  outline-color: var(--nt-color-yellow);
+}
+
+/* The overlay swallows pointer events; anything that is not inside a corner
+   needs them back to stay selectable. */
+.nt-map__overlay > .map-configuration-state { pointer-events: auto; }
+
+/* The bottom tab bar and the sheet occupy the foot of the map, so the bottom
+   corners have to clear them instead of sitting underneath. */
+.nt-map--mobile .nt-map__corner--bl,
+.nt-map--mobile .nt-map__corner--br {
+  bottom: calc(var(--nt-ctl-pad) + 64px + env(safe-area-inset-bottom, 0px));
+}
+
+/* A corner stack grows downward from the clusters above it, so a tall panel
+   would run past the foot of the viewport. Cap the body and let it scroll
+   instead of pushing content out of reach. The offset covers the navigation
+   and tool clusters that sit above the panel in the same corner. */
+.nt-map__corner .nt-mappanel__body {
+  max-height: max(140px, calc(100dvh - 448px));
+  overflow-y: auto;
+}
+.nt-map__sheet .nt-mappanel__body { max-height: 50dvh; }
+
+/* Inside a sheet the panel is already the surface; drop its own framing. */
+.nt-map__sheet .nt-mappanel {
+  width: 100%;
+  max-width: none;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+/* The canon anchors the sheet at bottom:0, which on this console lands it on
+   top of the tab bar and traps the operator inside one tool. Lift it clear so
+   the bar stays reachable while a sheet is open. */
+.nt-map--mobile .nt-map__sheet {
+  bottom: calc(65px + env(safe-area-inset-bottom, 0px));
+}
