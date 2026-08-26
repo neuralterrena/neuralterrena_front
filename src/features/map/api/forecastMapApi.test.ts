@@ -29,6 +29,7 @@ describe("buildRasterTileUrl", () => {
 describe("forecast model API", () => {
   it("discovers models and authenticates model runs while ordering cycles newest first", async () => {
     const accessToken = createAccessToken();
+    vi.stubEnv("VITE_API_BASE_URL", "http://localhost:8080");
     const fetchSpy = vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify({ access: accessToken }), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ models: ["gfs", { id: "icon-eu", label: "ICON Europa" }] }), { status: 200 }))
