@@ -114,7 +114,7 @@ export function LoginPage() {
               title={passwordVisible ? t("auth.passwordHide") : t("auth.passwordShow")}
               type="button"
             >
-              {passwordVisible ? <EyeOff size={18} strokeWidth={1.75} /> : <Eye size={18} strokeWidth={1.75} />}
+              {passwordVisible ? <EyeOff aria-hidden="true" size={18} strokeWidth={1.75} /> : <Eye aria-hidden="true" size={18} strokeWidth={1.75} />}
             </button>
           </div>
         </div>

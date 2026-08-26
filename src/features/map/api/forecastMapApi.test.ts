@@ -28,6 +28,7 @@ describe("buildRasterTileUrl", () => {
 
 describe("forecast model API", () => {
   it("discovers models and authenticates model runs while ordering cycles newest first", async () => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://auth.example.test");
     const accessToken = createAccessToken();
     const fetchSpy = vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify({ access: accessToken }), { status: 200 }))
