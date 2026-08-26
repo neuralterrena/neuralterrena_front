@@ -22,6 +22,40 @@ function drawArrow(context: CanvasRenderingContext2D, startX: number, startY: nu
   context.stroke();
 }
 
+// ⚡ Bolt: Fast binary search implementation to replace O(N) Array.reduce lookup.
+// This function runs hundreds of thousands of times per second (Particles x 60fps),
+// so switching from O(N) to O(log N) significantly improves CPU usage and battery life.
+function getClosestIndex(arr: readonly number[], val: number): number {
+  let low = 0;
+  let high = arr.length - 1;
+  const isAscending = arr[0] < arr[high];
+
+  if (isAscending) {
+    if (val <= arr[0]) return 0;
+    if (val >= arr[high]) return high;
+  } else {
+    if (val >= arr[0]) return 0;
+    if (val <= arr[high]) return high;
+  }
+
+  while (low <= high) {
+    const mid = (low + high) >> 1;
+    if (arr[mid] === val) return mid;
+
+    if (isAscending) {
+      if (arr[mid] < val) low = mid + 1;
+      else high = mid - 1;
+    } else {
+      if (arr[mid] > val) low = mid + 1;
+      else high = mid - 1;
+    }
+  }
+
+  const idx1 = Math.min(Math.max(low, 0), arr.length - 1);
+  const idx2 = Math.min(Math.max(low - 1, 0), arr.length - 1);
+  return Math.abs(arr[idx1] - val) < Math.abs(arr[idx2] - val) ? idx1 : idx2;
+}
+
 export function WindParticles({ field, map, mode }: Props) {
   const { t } = useLanguage();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -49,8 +83,8 @@ export function WindParticles({ field, map, mode }: Props) {
       particle.age = 0;
     };
     const velocity = (latitude: number, longitude: number) => {
-      const latitudeIndex = field.latitudes.reduce((best, value, index) => Math.abs(value - latitude) < Math.abs(field.latitudes[best] - latitude) ? index : best, 0);
-      const longitudeIndex = field.longitudes.reduce((best, value, index) => Math.abs(value - longitude) < Math.abs(field.longitudes[best] - longitude) ? index : best, 0);
+      const latitudeIndex = getClosestIndex(field.latitudes, latitude);
+      const longitudeIndex = getClosestIndex(field.longitudes, longitude);
       return [field.u[latitudeIndex][longitudeIndex], field.v[latitudeIndex][longitudeIndex]] as const;
     };
     let frame = 0;
