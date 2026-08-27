@@ -93,10 +93,19 @@ export function WindParticles({ field, map, mode }: Props) {
     const draw = () => {
       const rect = map.getCanvas().getBoundingClientRect();
       const pixelRatio = devicePixelRatio;
-      canvas.width = Math.round(rect.width * pixelRatio);
-      canvas.height = Math.round(rect.height * pixelRatio);
-      canvas.style.width = `${rect.width}px`;
-      canvas.style.height = `${rect.height}px`;
+
+      const nextWidth = Math.round(rect.width * pixelRatio);
+      const nextHeight = Math.round(rect.height * pixelRatio);
+      // ⚡ Bolt: Conditionally updating canvas dimensions.
+      // Reassigning canvas.width/height clears the drawing buffer and state, which is an expensive operation.
+      // This check avoids resetting the canvas context unnecessarily every frame, saving CPU and battery.
+      if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
+        canvas.width = nextWidth;
+        canvas.height = nextHeight;
+        canvas.style.width = `${rect.width}px`;
+        canvas.style.height = `${rect.height}px`;
+      }
+
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
       context.clearRect(0, 0, rect.width, rect.height);
       context.lineCap = "round";
