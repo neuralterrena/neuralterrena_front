@@ -39,13 +39,23 @@ export function MapPage() {
   const projection: MapProjection = viewMode === "globe" ? "globe" : "mercator";
   const timelineHours = useMemo(() => metadata?.forecast_hours ?? [], [metadata]);
   const selectedHour = timelineHours.includes(hour ?? -1) ? hour : (timelineHours[0] ?? null);
-  const validLayers = availableLayers(metadata, selectedHour);
+
+  // ⚡ Bolt: Memoize layer calculations to avoid array filtering on every render.
+  // The MapPage re-renders frequently (e.g. every 850ms when playing the timeline),
+  // so caching these computed arrays prevents unnecessary CPU work.
+  const validLayers = useMemo(() => availableLayers(metadata, selectedHour), [metadata, selectedHour]);
+
   const currentLayer = layer && validLayers.includes(layer) ? layer : selectLayer(metadata, selectedHour);
   const definition = currentLayer ? layerById.get(currentLayer) : undefined;
   const activeLayerLabel = definition ? t(definition.labelKey) : t("map.layersUnavailable");
   const windAvailable = validLayers.includes("wind_u_10m") && validLayers.includes("wind_v_10m");
   const validDate = selectedHour === null ? null : forecastValidDate(run, selectedHour);
-  const groupedLayers = [false, true].map((advanced) => forecastLayerDefinitions.filter((candidate) => Boolean(candidate.advanced) === advanced && validLayers.includes(candidate.id)));
+
+  // ⚡ Bolt: Memoize grouped layer lists to skip running .filter and .includes every render.
+  const groupedLayers = useMemo(
+    () => [false, true].map((advanced) => forecastLayerDefinitions.filter((candidate) => Boolean(candidate.advanced) === advanced && validLayers.includes(candidate.id))),
+    [validLayers]
+  );
 
   useEffect(() => {
     translateRef.current = t;
