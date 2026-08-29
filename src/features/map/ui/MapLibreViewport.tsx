@@ -112,6 +112,7 @@ class ForecastPanelControl implements IControl {
     button.className = "forecast-map-control__button";
     button.type = "button";
     button.innerHTML = "<svg aria-hidden=\"true\" fill=\"none\" viewBox=\"0 0 24 24\"><path d=\"m12 3-8 4 8 4 8-4-8-4Zm-8 9 8 4 8-4M4 17l8 4 8-4\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.75\" /></svg>";
+    button.setAttribute("aria-controls", "forecast-control-panel");
     button.addEventListener("click", () => this.state.onToggle());
     const label = document.createElement("span");
     label.className = "forecast-map-control__label";
