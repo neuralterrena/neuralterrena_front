@@ -1,4 +1,5 @@
 import type { PropsWithChildren, ReactNode } from "react";
+import { useLanguage } from "@/shared/providers";
 import { LanguageSwitcher, ThemeSwitcher } from "@/shared/ui";
 
 interface AuthLayoutProps extends PropsWithChildren {
@@ -7,9 +8,11 @@ interface AuthLayoutProps extends PropsWithChildren {
 }
 
 export function AuthLayout({ aside, children, title }: AuthLayoutProps) {
+  const { t } = useLanguage();
+
   return (
     <main className="login-screen">
-      <section aria-label="Operational context" className="login-visual">
+      <section aria-label={t("auth.contextLabel")} className="login-visual">
         <div className="login-visual__top">
           <img
             alt="neural terrena"
