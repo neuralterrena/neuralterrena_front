@@ -13,13 +13,11 @@ const PARTICLE_STEP = 0.0025;
 function drawArrow(context: CanvasRenderingContext2D, startX: number, startY: number, endX: number, endY: number) {
   const angle = Math.atan2(endY - startY, endX - startX);
   const headLength = 5;
-  context.beginPath();
   context.moveTo(startX, startY);
   context.lineTo(endX, endY);
   context.lineTo(endX - headLength * Math.cos(angle - Math.PI / 6), endY - headLength * Math.sin(angle - Math.PI / 6));
   context.moveTo(endX, endY);
   context.lineTo(endX - headLength * Math.cos(angle + Math.PI / 6), endY - headLength * Math.sin(angle + Math.PI / 6));
-  context.stroke();
 }
 
 // ⚡ Bolt: Fast binary search implementation to replace O(N) Array.reduce lookup.
@@ -116,10 +114,13 @@ export function WindParticles({ field, map, mode }: Props) {
       context.strokeStyle = "rgba(15, 61, 92, .92)";
       const vectorLength = arrowLengthForZoom(map.getZoom(), referenceZoom);
 
+      // ⚡ Bolt: Batch canvas path operations and avoid Math.hypot in the hot loop
+      // to significantly improve performance and reduce CPU overhead.
+      context.beginPath();
       for (const particle of particles) {
         const [u, v] = velocity(particle.latitude, particle.longitude);
         const start = map.project([particle.longitude, particle.latitude]);
-        const magnitude = Math.hypot(u, v);
+        const magnitude = Math.sqrt(u * u + v * v);
         if (magnitude > 0) drawArrow(context, start.x, start.y, start.x + (u / magnitude) * vectorLength, start.y - (v / magnitude) * vectorLength);
         const latitudeRadians = (particle.latitude * Math.PI) / 180;
         if (mode === "particles" && !reducedMotion) {
@@ -129,6 +130,7 @@ export function WindParticles({ field, map, mode }: Props) {
           if (particle.age > 100 || particle.latitude < minLatitude || particle.latitude > maxLatitude || particle.longitude < minLongitude || particle.longitude > maxLongitude) reset(particle);
         }
       }
+      context.stroke();
       if (!document.hidden && !reducedMotion && mode === "particles") frame = requestAnimationFrame(draw);
     };
 
