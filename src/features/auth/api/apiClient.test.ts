@@ -49,6 +49,22 @@ describe("apiClient", () => {
     expect(headers.get("Authorization")).toBe(`Bearer ${session.accessToken}`);
   });
 
+  it("does not add the access token to an endpoint with a malicious prefix match", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({ access: createAccessToken("usr_1") }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+
+    await authService.login({ email: "operator@neuralterrena.com", password: "secret" });
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await apiClient.get("http://localhost:8080/api-malicious/test");
+
+    const [, init] = fetchSpy.mock.calls.at(-1) ?? [];
+    const headers = new Headers(init?.headers);
+
+    expect(headers.get("Authorization")).toBeNull();
+  });
+
   it("adds the access token to requests for an explicitly authorized service", async () => {
     vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify({ access: createAccessToken("usr_1") }), { status: 200 }))
