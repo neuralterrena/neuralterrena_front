@@ -1,4 +1,4 @@
-import { LockKeyhole, RotateCcwKey, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, LockKeyhole, RotateCcwKey, ShieldCheck } from "lucide-react";
 import { type FormEvent, useId, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AuthError } from "../model/authTypes";
@@ -17,6 +17,7 @@ export function ResetPasswordConfirmPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [password, setPassword] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
   const uid = searchParams.get("uid")?.trim() ?? "";
   const token = searchParams.get("token")?.trim() ?? "";
@@ -87,9 +88,18 @@ export function ResetPasswordConfirmPage() {
               name="newPassword"
               onChange={(event) => setPassword(event.target.value)}
               placeholder={t("auth.newPasswordPlaceholder")}
-              type="password"
+              type={passwordVisible ? "text" : "password"}
               value={password}
             />
+            <button
+              aria-label={passwordVisible ? t("auth.passwordHide") : t("auth.passwordShow")}
+              className="icon-button"
+              onClick={() => setPasswordVisible((visible) => !visible)}
+              title={passwordVisible ? t("auth.passwordHide") : t("auth.passwordShow")}
+              type="button"
+            >
+              {passwordVisible ? <EyeOff aria-hidden="true" size={18} strokeWidth={1.75} /> : <Eye aria-hidden="true" size={18} strokeWidth={1.75} />}
+            </button>
           </div>
         </div>
 
@@ -103,9 +113,18 @@ export function ResetPasswordConfirmPage() {
               name="confirmPassword"
               onChange={(event) => setConfirmPassword(event.target.value)}
               placeholder={t("auth.confirmPasswordPlaceholder")}
-              type="password"
+              type={passwordVisible ? "text" : "password"}
               value={confirmPassword}
             />
+            <button
+              aria-label={passwordVisible ? t("auth.passwordHide") : t("auth.passwordShow")}
+              className="icon-button"
+              onClick={() => setPasswordVisible((visible) => !visible)}
+              title={passwordVisible ? t("auth.passwordHide") : t("auth.passwordShow")}
+              type="button"
+            >
+              {passwordVisible ? <EyeOff aria-hidden="true" size={18} strokeWidth={1.75} /> : <Eye aria-hidden="true" size={18} strokeWidth={1.75} />}
+            </button>
           </div>
         </div>
 
