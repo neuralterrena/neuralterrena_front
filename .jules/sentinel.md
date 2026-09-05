@@ -1,0 +1,4 @@
+## 2025-02-23 - Prevent Stack Trace Leakage in Error Responses
+**Vulnerability:** The application was directly rendering raw HTML responses from failed API calls to the UI if a textual response existed. If a backend service or proxy threw a 500 error containing a stack trace formatted as an HTML page, it was forwarded and rendered safely by React, but the raw internal details were exposed to the user.
+**Learning:** Generic fallback mechanisms like `response.text()` blindly fetch whatever body the backend provided without sanitization or validation of the content type. This bypasses the structured error boundaries designed for the JSON API.
+**Prevention:** Explicitly inspect textual API error fallbacks. Check for standard HTML declarations (e.g. `<!doctype html>`) and suppress the message if it appears to be a generic HTML error page rather than a structured API response.
