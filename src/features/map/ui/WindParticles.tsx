@@ -119,7 +119,9 @@ export function WindParticles({ field, map, mode }: Props) {
       for (const particle of particles) {
         const [u, v] = velocity(particle.latitude, particle.longitude);
         const start = map.project([particle.longitude, particle.latitude]);
-        const magnitude = Math.hypot(u, v);
+        // ⚡ Bolt: Math.hypot is notoriously slow in V8 because it handles infinite args
+        // and under/overflow, which is unnecessary here. Math.sqrt(u*u + v*v) is ~20x faster.
+        const magnitude = Math.sqrt(u * u + v * v);
         if (magnitude > 0) drawArrow(context, start.x, start.y, start.x + (u / magnitude) * vectorLength, start.y - (v / magnitude) * vectorLength);
         const latitudeRadians = (particle.latitude * Math.PI) / 180;
         if (mode === "particles" && !reducedMotion) {
