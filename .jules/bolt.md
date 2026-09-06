@@ -4,3 +4,6 @@
 ## 2026-08-27 - Canvas state reset in requestAnimationFrame
 **Learning:** Reassigning a `<canvas>` element's `width` or `height` clears its drawing buffer and resets its 2D context state. In `WindParticles.tsx`, unconditionally updating `canvas.width` and `canvas.height` on every frame inside `requestAnimationFrame` caused an expensive re-allocation and state reset, severely impacting performance.
 **Action:** Conditionally update `canvas.width` and `canvas.height` (e.g. `if (canvas.width !== nextWidth)`) to avoid triggering unnecessary resets when dimensions haven't actually changed.
+## 2026-08-27 - Batching Canvas Operations in requestAnimationFrame
+**Learning:** In `WindParticles.tsx`, issuing `context.beginPath()` and `context.stroke()` for every single drawn arrow (e.g., 360 times per frame) creates enormous overhead for the canvas rendering engine, particularly when expensive paint properties like `shadowBlur` are enabled. It breaks the drawing batch into hundreds of individual draw calls.
+**Action:** When rendering many discrete paths (like wind arrows or particles) using the same style within an animation loop, hoist `beginPath()` outside the loop and issue a single `stroke()` or `fill()` call at the end to batch them into one rendering operation.
