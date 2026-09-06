@@ -8,16 +8,6 @@ interface RequestOptions extends RequestInit {
   skipAuthRetry?: boolean;
 }
 
-const isBackendUrl = (url: URL) => {
-  const apiBaseUrl = authService.getApiBaseUrl();
-
-  if (!apiBaseUrl) {
-    return false;
-  }
-
-  return url.toString().startsWith(new URL(apiBaseUrl).toString());
-};
-
 const isUrlWithinBase = (url: URL, baseUrl?: string) => {
   if (!baseUrl) {
     return false;
@@ -32,6 +22,10 @@ const isUrlWithinBase = (url: URL, baseUrl?: string) => {
   const basePath = base.pathname.replace(/\/+$/, "") || "/";
 
   return basePath === "/" || url.pathname === basePath || url.pathname.startsWith(`${basePath}/`);
+};
+
+const isBackendUrl = (url: URL) => {
+  return isUrlWithinBase(url, authService.getApiBaseUrl());
 };
 
 const resolveUrl = (input: RequestInfo | URL) => {
