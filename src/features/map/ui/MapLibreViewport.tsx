@@ -187,6 +187,12 @@ export function MapLibreViewport({
   });
   const [mapInstance, setMapInstance] = useState<Map | null>(null);
 
+  // ⚡ Bolt: Precalculate origins to avoid expensive new URL() parsing on every tile fetch
+  const forecastOrigin = configuration.forecastHubApiBaseUrl
+    ? new URL(configuration.forecastHubApiBaseUrl).origin
+    : null;
+  const localOrigin = globalThis.location?.origin || "http://localhost";
+
   useEffect(() => {
     onErrorRef.current = onError;
   }, [onError]);
@@ -224,9 +230,16 @@ export function MapLibreViewport({
       style: configuration.styleUrl,
       transformRequest: (url) => {
         const token = authService.getAccessToken();
-        if (!token || !configuration.forecastHubApiBaseUrl) return { url };
-        const forecastOrigin = new URL(configuration.forecastHubApiBaseUrl).origin;
-        if (new URL(url, globalThis.location.origin).origin !== forecastOrigin) return { url };
+        if (!token || !forecastOrigin) return { url };
+
+        // Fast path origin check for absolute URLs: exact match or starts with origin + "/"
+        if (url.startsWith("http") && url !== forecastOrigin && !url.startsWith(`${forecastOrigin}/`)) return { url };
+
+        // Fast path origin check for relative URLs
+        // Note: MapLibre tile requests that are relative (e.g. `v1/models/...`) do not start with HTTP(S) or "//".
+        // Protocol-relative URLs (e.g. "//malicious.com") should not match.
+        if (!url.startsWith("http") && (url.startsWith("//") || localOrigin !== forecastOrigin)) return { url };
+
         return { url, headers: { Authorization: `Bearer ${token}` } };
       },
       zoom: configuration.initialView.zoom,
@@ -250,7 +263,7 @@ export function MapLibreViewport({
       forecastPanelControlRef.current = null;
       setMapInstance(null);
     };
-  }, [configuration.forecastHubApiBaseUrl, configuration.initialView.center, configuration.initialView.zoom, configuration.styleUrl]);
+  }, [configuration.forecastHubApiBaseUrl, configuration.initialView.center, configuration.initialView.zoom, configuration.styleUrl, forecastOrigin, localOrigin]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -319,7 +332,7 @@ export function MapLibreViewport({
       map.off("load", preloadTiles);
       map.off("moveend", preloadTiles);
     };
-  }, [configuration.forecastHubApiBaseUrl, mapInstance, rasterUrls]);
+  }, [configuration.forecastHubApiBaseUrl, mapInstance, rasterUrls, forecastOrigin, localOrigin]);
 
   useEffect(() => {
     const map = mapRef.current;
