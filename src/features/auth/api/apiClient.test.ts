@@ -66,6 +66,22 @@ describe("apiClient", () => {
     expect(headers.get("X-API-Key")).toBeNull();
   });
 
+  it("does not leak the access token to endpoints that share a prefix but are outside the base path", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({ access: createAccessToken("usr_1") }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+
+    await authService.login({ email: "operator@neuralterrena.com", password: "secret" });
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await apiClient.get("http://localhost:8080/api-attacker/resource");
+
+    const [, init] = fetchSpy.mock.calls.at(-1) ?? [];
+    const headers = new Headers(init?.headers);
+
+    expect(headers.get("Authorization")).toBeNull();
+  });
+
   it("adds the access token to an authorized service published under a path prefix", async () => {
     vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify({ access: createAccessToken("usr_1") }), { status: 200 }))

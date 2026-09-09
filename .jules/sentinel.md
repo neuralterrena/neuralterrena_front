@@ -1,0 +1,4 @@
+## 2024-05-18 - Authorization Token Leakage via URL Prefix Matching
+**Vulnerability:** The `isBackendUrl` function in `src/features/auth/api/apiClient.ts` used a simple `startsWith()` on stringified URLs to determine if an authorization token should be attached. This could cause the token to be leaked to malicious domains that share a prefix with the API base URL (e.g., `https://api.example.com/v1-attacker/` matching `https://api.example.com/v1`).
+**Learning:** URL prefix matching is inherently insecure for determining if a URL belongs to a specific origin or path, as it ignores URL boundaries like domains or directories.
+**Prevention:** Always parse URLs and compare their `origin` and `pathname` explicitly instead of doing string prefix comparisons. The existing `isUrlWithinBase` utility was used to safely perform this check.
