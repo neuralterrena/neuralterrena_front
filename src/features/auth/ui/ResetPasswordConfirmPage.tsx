@@ -83,6 +83,7 @@ export function ResetPasswordConfirmPage() {
             <LockKeyhole aria-hidden="true" size={18} strokeWidth={1.75} />
             <input
               autoComplete="new-password"
+              autoFocus
               id={passwordId}
               name="newPassword"
               onChange={(event) => setPassword(event.target.value)}
