@@ -215,6 +215,9 @@ export function MapLibreViewport({
       return;
     }
 
+    const forecastOrigin = configuration.forecastHubApiBaseUrl ? new URL(configuration.forecastHubApiBaseUrl).origin : null;
+    const locationOrigin = globalThis.location.origin;
+
     const map = new Map({
       center: configuration.initialView.center,
       bearing: -25,
@@ -224,9 +227,8 @@ export function MapLibreViewport({
       style: configuration.styleUrl,
       transformRequest: (url) => {
         const token = authService.getAccessToken();
-        if (!token || !configuration.forecastHubApiBaseUrl) return { url };
-        const forecastOrigin = new URL(configuration.forecastHubApiBaseUrl).origin;
-        if (new URL(url, globalThis.location.origin).origin !== forecastOrigin) return { url };
+        if (!token || !forecastOrigin) return { url };
+        if (new URL(url, locationOrigin).origin !== forecastOrigin) return { url };
         return { url, headers: { Authorization: `Bearer ${token}` } };
       },
       zoom: configuration.initialView.zoom,
