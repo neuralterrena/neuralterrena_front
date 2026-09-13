@@ -84,6 +84,7 @@ export function LoginPage() {
             <Mail aria-hidden="true" size={18} strokeWidth={1.75} />
             <input
               autoComplete="email"
+              autoFocus
               id={emailId}
               name="email"
               onChange={(event) => setEmail(event.target.value)}
