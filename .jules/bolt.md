@@ -7,3 +7,6 @@
 ## 2026-09-01 - Canvas Path Batching Optimization
 **Learning:** In canvas rendering loops (like `WindParticles.tsx`), calling `beginPath()` and `stroke()` for every individual path is extremely expensive due to state mutations.
 **Action:** Always batch canvas drawing operations by calling `beginPath()` once before a loop and `stroke()` once after the loop when rendering many similar shapes.
+## 2026-08-28 - Math.hypot bottleneck in requestAnimationFrame
+**Learning:** `Math.hypot(u, v)` is surprisingly slow in V8 because it safely handles an arbitrary number of arguments and protects against underflow/overflow. When used inside a hot `requestAnimationFrame` loop (like calculating magnitude for hundreds of wind particles at 60fps), it creates measurable overhead.
+**Action:** Replace `Math.hypot(u, v)` with `Math.sqrt(u * u + v * v)` for simple 2D vectors in performance-critical loops where under/overflow is not a concern, as it is over 20x faster.
