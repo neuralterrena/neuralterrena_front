@@ -111,7 +111,22 @@ class ForecastPanelControl implements IControl {
     const button = document.createElement("button");
     button.className = "forecast-map-control__button";
     button.type = "button";
-    button.innerHTML = "<svg aria-hidden=\"true\" fill=\"none\" viewBox=\"0 0 24 24\"><path d=\"m12 3-8 4 8 4 8-4-8-4Zm-8 9 8 4 8-4M4 17l8 4 8-4\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.75\" /></svg>";
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("viewBox", "0 0 24 24");
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "m12 3-8 4 8 4 8-4-8-4Zm-8 9 8 4 8-4M4 17l8 4 8-4");
+    path.setAttribute("stroke", "currentColor");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+    path.setAttribute("stroke-width", "1.75");
+
+    svg.appendChild(path);
+    button.appendChild(svg);
+
     button.setAttribute("aria-controls", "forecast-control-panel");
     button.addEventListener("click", () => this.state.onToggle());
     const label = document.createElement("span");
@@ -215,6 +230,11 @@ export function MapLibreViewport({
       return;
     }
 
+    // ⚡ Bolt: Hoist static URL calculation outside the transformRequest callback
+    // transformRequest is called frequently (for every map tile). Re-evaluating
+    // new URL(configuration.forecastHubApiBaseUrl) on every call adds unnecessary CPU overhead.
+    const forecastOrigin = configuration.forecastHubApiBaseUrl ? new URL(configuration.forecastHubApiBaseUrl).origin : null;
+
     const map = new Map({
       center: configuration.initialView.center,
       bearing: -25,
@@ -224,8 +244,7 @@ export function MapLibreViewport({
       style: configuration.styleUrl,
       transformRequest: (url) => {
         const token = authService.getAccessToken();
-        if (!token || !configuration.forecastHubApiBaseUrl) return { url };
-        const forecastOrigin = new URL(configuration.forecastHubApiBaseUrl).origin;
+        if (!token || !forecastOrigin) return { url };
         if (new URL(url, globalThis.location.origin).origin !== forecastOrigin) return { url };
         return { url, headers: { Authorization: `Bearer ${token}` } };
       },
