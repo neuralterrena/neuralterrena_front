@@ -87,6 +87,9 @@ const parseAuthError = async (response: Response, fallbackCode: AuthError["code"
     const text = await response.text();
 
     if (text) {
+      if (text.trim().toLowerCase().startsWith("<!doctype html") || text.trim().toLowerCase().startsWith("<html")) {
+        return new AuthError(code);
+      }
       return new AuthError(code, text);
     }
   } catch {
