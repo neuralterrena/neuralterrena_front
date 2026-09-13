@@ -1,0 +1,4 @@
+## 2025-02-28 - URL Validation SSRF/Credential Leakage Vulnerability
+**Vulnerability:** `isBackendUrl` used a naive `startsWith` string check to validate if a URL is a backend URL (e.g., `url.toString().startsWith(new URL(apiBaseUrl).toString())`). This is vulnerable to SSRF and credential leakage as an attacker could supply a URL like `https://api.example.com/v1-malicious` which would pass the check if the `apiBaseUrl` is `https://api.example.com/v1`. This would cause the app to attach authentication tokens to requests sent to unintended URLs.
+**Learning:** Never use string prefix matching (`startsWith`) for URL validation, especially when the validation controls the attachment of sensitive data like authorization tokens.
+**Prevention:** Always use strict origin and pathname comparisons (like the `isUrlWithinBase` utility function) which properly assert path boundaries (e.g., checking for exactly `/` or appending a `/`).
