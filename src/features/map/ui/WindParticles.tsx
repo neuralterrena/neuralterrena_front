@@ -13,13 +13,11 @@ const PARTICLE_STEP = 0.0025;
 function drawArrow(context: CanvasRenderingContext2D, startX: number, startY: number, endX: number, endY: number) {
   const angle = Math.atan2(endY - startY, endX - startX);
   const headLength = 5;
-  context.beginPath();
   context.moveTo(startX, startY);
   context.lineTo(endX, endY);
   context.lineTo(endX - headLength * Math.cos(angle - Math.PI / 6), endY - headLength * Math.sin(angle - Math.PI / 6));
   context.moveTo(endX, endY);
   context.lineTo(endX - headLength * Math.cos(angle + Math.PI / 6), endY - headLength * Math.sin(angle + Math.PI / 6));
-  context.stroke();
 }
 
 // ⚡ Bolt: Fast binary search implementation to replace O(N) Array.reduce lookup.
@@ -116,6 +114,12 @@ export function WindParticles({ field, map, mode }: Props) {
       context.strokeStyle = "rgba(15, 61, 92, .92)";
       const vectorLength = arrowLengthForZoom(map.getZoom(), referenceZoom);
 
+      // ⚡ Bolt: Batch canvas paths. Instead of calling beginPath() and stroke()
+      // for every arrow, we call them once outside the loop. This batches
+      // hundreds of drawing operations per frame into a single path and stroke command,
+      // dramatically lowering CPU usage and reducing dropped frames.
+      context.beginPath();
+
       for (const particle of particles) {
         const [u, v] = velocity(particle.latitude, particle.longitude);
         const start = map.project([particle.longitude, particle.latitude]);
@@ -133,6 +137,9 @@ export function WindParticles({ field, map, mode }: Props) {
           if (particle.age > 100 || particle.latitude < minLatitude || particle.latitude > maxLatitude || particle.longitude < minLongitude || particle.longitude > maxLongitude) reset(particle);
         }
       }
+
+      context.stroke();
+
       if (!document.hidden && !reducedMotion && mode === "particles") frame = requestAnimationFrame(draw);
     };
 
