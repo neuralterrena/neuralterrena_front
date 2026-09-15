@@ -57,6 +57,20 @@ export function MapPage() {
     [validLayers]
   );
 
+  // ⚡ Bolt: Preload next raster tiles to avoid flickering during timeline playback.
+  // We look ahead 3 frames in the timeline so MapLibreViewport can fetch tiles in the background
+  // before they are needed. This provides a much smoother animation playback experience.
+  const preloadedRasterUrls = useMemo(() => {
+    const forecastHubApiBaseUrl = configuration.forecastHubApiBaseUrl;
+    if (!model || !run || !currentLayer || !definition || selectedHour === null || !forecastHubApiBaseUrl) return [];
+    const currentIndex = timelineHours.indexOf(selectedHour);
+    if (currentIndex === -1) return [];
+
+    return timelineHours.slice(currentIndex + 1, currentIndex + 4)
+      .map(hour => buildRasterTileUrl(forecastHubApiBaseUrl, model, run, currentLayer, hour, definition.defaultRange, definition.palette));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [model, run, currentLayer, definition, selectedHour, timelineHours, configuration.forecastHubApiBaseUrl]);
+
   useEffect(() => {
     translateRef.current = t;
   }, [t]);
@@ -179,7 +193,7 @@ export function MapPage() {
   };
 
   return <main className="map-page">
-    <MapLibreViewport configuration={configuration} flat={viewMode === "flat"} forecastPanelAriaLabel={`${isForecastPanelOpen ? t("map.closeForecastControls") : t("map.openForecastControls")}. ${t("map.currentLayer").replace("{layer}", activeLayerLabel)}`} forecastPanelLabel={activeLayerLabel} forecastPanelOpen={isForecastPanelOpen} onError={setError} onForecastPanelToggle={() => setIsForecastPanelOpen((open) => !open)} projection={projection} rasterUrl={rasterUrl} rasterUrls={[]} windField={windEnabled && windAvailable ? windField : null} windMode={windMode} />
+    <MapLibreViewport configuration={configuration} flat={viewMode === "flat"} forecastPanelAriaLabel={`${isForecastPanelOpen ? t("map.closeForecastControls") : t("map.openForecastControls")}. ${t("map.currentLayer").replace("{layer}", activeLayerLabel)}`} forecastPanelLabel={activeLayerLabel} forecastPanelOpen={isForecastPanelOpen} onError={setError} onForecastPanelToggle={() => setIsForecastPanelOpen((open) => !open)} projection={projection} rasterUrl={rasterUrl} rasterUrls={preloadedRasterUrls} windField={windEnabled && windAvailable ? windField : null} windMode={windMode} />
     {models.length ? <>
       {isForecastPanelOpen ? <section aria-label={t("map.forecastPanel")} className="forecast-control" id="forecast-control-panel">
         <header className="forecast-control__header"><div><h2>{t("map.forecast")}</h2><p>{model ? `${modelAttribution(model)} · ${run || t("map.noCycle")}` : t("map.loadingModel")}</p></div><button aria-label={t("map.closeForecastControls")} title={t("map.closeForecastControls")} className="forecast-control__close" onClick={() => setIsForecastPanelOpen(false)} type="button"><X aria-hidden="true" size={17} /></button></header>
