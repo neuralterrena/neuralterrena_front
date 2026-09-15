@@ -8,7 +8,7 @@ interface RequestOptions extends RequestInit {
   skipAuthRetry?: boolean;
 }
 
-const isUrlWithinBase = (url: URL, baseUrl?: string) => {
+export const isUrlWithinBase = (url: URL, baseUrl?: string) => {
   if (!baseUrl) {
     return false;
   }

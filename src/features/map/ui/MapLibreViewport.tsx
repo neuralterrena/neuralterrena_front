@@ -13,7 +13,7 @@ import { OROGRAPHY_LAYER_ID, OROGRAPHY_SOURCE_ID } from "../model/layers";
 import type { WindField } from "../api/forecastMapApi";
 import { WindParticles } from "./WindParticles";
 import { authService } from "../../auth/model/authService";
-import { apiClient } from "../../auth/api/apiClient";
+import { apiClient, isUrlWithinBase } from "../../auth/api/apiClient";
 import { useLanguage } from "@/shared/providers";
 
 const FORECAST_SOURCE_ID_PREFIX = "forecast-raster-";
@@ -230,11 +230,6 @@ export function MapLibreViewport({
       return;
     }
 
-    // ⚡ Bolt: Hoist static URL calculation outside the transformRequest callback
-    // transformRequest is called frequently (for every map tile). Re-evaluating
-    // new URL(configuration.forecastHubApiBaseUrl) on every call adds unnecessary CPU overhead.
-    const forecastOrigin = configuration.forecastHubApiBaseUrl ? new URL(configuration.forecastHubApiBaseUrl).origin : null;
-
     const map = new Map({
       center: configuration.initialView.center,
       bearing: -25,
@@ -244,8 +239,8 @@ export function MapLibreViewport({
       style: configuration.styleUrl,
       transformRequest: (url) => {
         const token = authService.getAccessToken();
-        if (!token || !forecastOrigin) return { url };
-        if (new URL(url, globalThis.location.origin).origin !== forecastOrigin) return { url };
+        if (!token || !configuration.forecastHubApiBaseUrl) return { url };
+        if (!isUrlWithinBase(new URL(url, globalThis.location.origin), configuration.forecastHubApiBaseUrl)) return { url };
         return { url, headers: { Authorization: `Bearer ${token}` } };
       },
       zoom: configuration.initialView.zoom,
